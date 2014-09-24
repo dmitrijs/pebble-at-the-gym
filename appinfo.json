@@ -1,0 +1,24 @@
+{
+  "uuid": "98cb1554-b00a-4a00-b17b-a172c91f578a",
+  "shortName": "at_the_gym",
+  "longName": "at_the_gym",
+  "companyName": "MakeAwesomeHappen",
+  "versionCode": 1,
+  "versionLabel": "1.0",
+  "watchapp": {
+    "watchface": false
+  },
+  "appKeys": {
+    "dummy": 0
+  },
+  "resources": {
+    "media": [
+        {
+            "type": "png",
+            "name": "IMAGE_ICON",
+            "file": "icon.png",
+            "menuIcon": true
+        }
+    ]
+  }
+}
