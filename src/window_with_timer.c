@@ -322,12 +322,10 @@ static void increase_click_handler(ClickRecognizerRef recognizer, void *context)
 }
 
 static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
-    if (current_field == 0) {
-        current_field = F__COUNT - 1;
-    } else {
+    if (current_field > 0) {
         current_field--;
+        update_inv_layer();
     }
-    update_inv_layer();
 }
 
 static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
