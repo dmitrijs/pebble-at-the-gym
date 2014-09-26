@@ -3,7 +3,7 @@
 #include <pebble.h>
 
 enum MACHINE_TYPES {
-    M_WARMUP = 0x10,
+    M_WARMUP = 0x0,
     M_SHOULDERS,
     M_CHEST,
     M_TRICEPS,
@@ -11,8 +11,8 @@ enum MACHINE_TYPES {
     M_UPPER_BACK,
     M_LOWER_BACK,
     M_LEGS_ULTIMATE,
-    M_LEGS_UP,
-    M_LEGS_DOWN,
+//    M_LEGS_UP, /* excluded for now */
+//    M_LEGS_DOWN,
     M_ABS,
     M_ABS_SIDE,
     M_COOLDOWN
@@ -49,6 +49,7 @@ struct Machine {
     Machine *next;
 };
 
+Machine* first_machine = NULL;
 Machine* current_machine;
 
 InverterLayer* s_invert_all;
@@ -331,6 +332,69 @@ static void click_config_provider(void *context) {
     window_single_click_subscribe(BUTTON_ID_DOWN, decrease_click_handler);
 }
 
+static void create_all_machines() {
+
+    Machine* last_created_machine = NULL;
+
+    for (int i = M_WARMUP; i <= M_COOLDOWN; i++) {
+        Machine* m = malloc(sizeof(Machine));
+        m->mkey = i;
+        m->next = NULL;
+        m->warmup_kg = 0;
+        m->normal_kg = 0;
+        m->set_1 = 0;
+        m->set_2 = 0;
+        m->set_3 = 0;
+
+        switch (i) {
+            case M_WARMUP:
+                m->title = "Warmup. E.g. run.";
+                break;
+            case M_SHOULDERS:
+                m->title = "Shoulders";
+                break;
+            case M_CHEST:
+                m->title = "Chest";
+                break;
+            case M_TRICEPS:
+                m->title = "Triceps";
+                break;
+            case M_BICEPS:
+                m->title = "Biceps";
+                break;
+            case M_UPPER_BACK:
+                m->title = "Back (upper!)";
+                break;
+            case M_LOWER_BACK:
+                m->title = "Back (lower)";
+                break;
+            case M_LEGS_ULTIMATE:
+                m->title = "Legs (ultimate)";
+                break;
+            case M_ABS:
+                m->title = "ABS (front)";
+                break;
+            case M_ABS_SIDE:
+                m->title = "ABS (sides)";
+                break;
+            case M_COOLDOWN:
+                m->title = "Cooldown. E.g. cycle.";
+                break;
+            default:
+                APP_LOG(APP_LOG_LEVEL_DEBUG, "!!!!!!!!!! UNKNOWN MACHINE: %d", i);
+        }
+
+        if (first_machine == NULL) {
+            first_machine = m;
+        }
+        if (last_created_machine != NULL) {
+            last_created_machine->next = m;
+        }
+        last_created_machine = m;
+    }
+
+}
+
 void show_window_with_timer(void) {
     initialise_ui();
     window_set_window_handlers(s_window, (WindowHandlers) {
@@ -348,16 +412,19 @@ void show_window_with_timer(void) {
 
     current_field = F_SET_1;
 
-    current_machine = malloc(sizeof(Machine));
-    current_machine->mkey = M_TRICEPS;
-    current_machine->next = NULL;
+    create_all_machines();
 
-    current_machine->title = "Triceps is no joke; mister";
-    current_machine->warmup_kg = 105;
-    current_machine->normal_kg = 158;
-    current_machine->set_1 = 11;
-    current_machine->set_2 = 12;
-    current_machine->set_3 = 13;
+    current_machine = first_machine;
+//    malloc(sizeof(Machine));
+//    current_machine->mkey = M_TRICEPS;
+//    current_machine->next = NULL;
+//
+//    current_machine->title = "Triceps is no joke; mister";
+//    current_machine->warmup_kg = 105;
+//    current_machine->normal_kg = 158;
+//    current_machine->set_1 = 11;
+//    current_machine->set_2 = 12;
+//    current_machine->set_3 = 13;
 
     APP_LOG(APP_LOG_LEVEL_DEBUG, "warmpup init = %d", (*current_machine).warmup_kg);
 
