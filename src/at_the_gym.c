@@ -1,4 +1,5 @@
 #include <pebble.h>
+#include "window_with_timer.h"
 
 static Window *window;
 static int16_t window_width, window_height;
@@ -18,6 +19,8 @@ struct {
 
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
   text_layer_set_text(text_layer, "Select");
+
+    show_window_with_timer();
 }
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -62,6 +65,7 @@ static void init(void) {
 static void deinit(void) {
   window_destroy(window);
 }
+/*
 
 int main(void) {
   init();
@@ -71,3 +75,4 @@ int main(void) {
   app_event_loop();
   deinit();
 }
+*/

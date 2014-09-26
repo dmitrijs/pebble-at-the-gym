@@ -18,6 +18,26 @@
             "name": "IMAGE_ICON",
             "file": "icon.png",
             "menuIcon": true
+        },
+        {
+            "type": "png",
+            "name": "SQUARES_SELECTED",
+            "file": "progress_squares_selected.png"
+        },
+        {
+            "type": "png",
+            "name": "UP",
+            "file": "up.png"
+        },
+        {
+            "type": "png",
+            "name": "DOWN",
+            "file": "down.png"
+        },
+        {
+            "type": "png",
+            "name": "OK",
+            "file": "ok.png"
         }
     ]
   }
