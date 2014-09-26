@@ -1,5 +1,6 @@
 #include "window_with_timer.h"
 #include "enums.h"
+#include "lib/parsed.h"
 #include <pebble.h>
 
 enum MACHINE_TYPES {
@@ -47,6 +48,7 @@ struct Machine {
     char* set_3_str;
 
     Machine *next;
+    Machine *prev;
 };
 
 Machine* first_machine = NULL;
@@ -202,6 +204,7 @@ static void update_machine() {
     text_layer_set_text(s_set_3, current_machine->set_3_str);
 }
 
+/*
 static void edit_number_callback(int key, int number) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "callback: key=%d, number=%d", key, number);
 
@@ -227,6 +230,7 @@ static void edit_number_callback(int key, int number) {
 
     update_machine();
 }
+*/
 
 static void update_inv_layer() {
     GRect rect = layer_get_frame(editable_fields[current_field]);
@@ -262,6 +266,12 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
 
 static void decrease_click_handler(ClickRecognizerRef recognizer, void *context) {
     switch (current_field) {
+        case F_TITLE:
+            if (current_machine->next != NULL) {
+                current_machine = current_machine->next;
+                update_machine();
+            }
+            break;
         case F_WARMUP_KG:
             current_machine->warmup_kg--;
             break;
@@ -285,6 +295,12 @@ static void decrease_click_handler(ClickRecognizerRef recognizer, void *context)
 
 static void increase_click_handler(ClickRecognizerRef recognizer, void *context) {
     switch (current_field) {
+        case F_TITLE:
+            if (current_machine->prev != NULL) {
+                current_machine = current_machine->prev;
+                update_machine();
+            }
+            break;
         case F_WARMUP_KG:
             current_machine->warmup_kg++;
             break;
@@ -328,8 +344,8 @@ static void click_config_provider(void *context) {
     window_single_click_subscribe(BUTTON_ID_SELECT, next_click_handler);
     window_single_click_subscribe(BUTTON_ID_BACK, prev_click_handler);
 
-    window_single_click_subscribe(BUTTON_ID_UP, increase_click_handler);
-    window_single_click_subscribe(BUTTON_ID_DOWN, decrease_click_handler);
+    window_single_repeating_click_subscribe(BUTTON_ID_UP, 100, increase_click_handler);
+    window_single_repeating_click_subscribe(BUTTON_ID_DOWN, 100, decrease_click_handler);
 }
 
 static void create_all_machines() {
@@ -340,11 +356,17 @@ static void create_all_machines() {
         Machine* m = malloc(sizeof(Machine));
         m->mkey = i;
         m->next = NULL;
+        m->prev = last_created_machine;
         m->warmup_kg = 0;
         m->normal_kg = 0;
         m->set_1 = 0;
         m->set_2 = 0;
         m->set_3 = 0;
+        m->warmup_kg_str = malloc(4);
+        m->normal_kg_str = malloc(4);
+        m->set_1_str = malloc(4);
+        m->set_2_str = malloc(4);
+        m->set_3_str = malloc(4);
 
         switch (i) {
             case M_WARMUP:
@@ -392,7 +414,34 @@ static void create_all_machines() {
         }
         last_created_machine = m;
     }
+}
 
+void load_machines_data() {
+
+    char* data_init = "0;100;101;10;11;12;;1;102;103;13;14;15;;";
+
+    Machine *m = first_machine;
+
+    parsed* p = parsed_create(data_init, ';');
+
+    while (m != NULL && !parsed_done(p)) {
+        int mkey = parsed_number(p);
+        if (mkey != m->mkey) {
+            APP_LOG(APP_LOG_LEVEL_DEBUG, "Wrong mkey. Skipping data load.");
+            free(p);
+            break;
+        }
+
+        m->warmup_kg = parsed_number(p);
+        m->normal_kg = parsed_number(p);
+        m->set_1 = parsed_number(p);
+        m->set_2 = parsed_number(p);
+        m->set_3 = parsed_number(p);
+        parsed_skip(p, 1);
+
+        m = m->next;
+    }
+    free(p);
 }
 
 void show_window_with_timer(void) {
@@ -413,8 +462,16 @@ void show_window_with_timer(void) {
     current_field = F_SET_1;
 
     create_all_machines();
+    load_machines_data();
 
     current_machine = first_machine;
+
+    Machine *test = current_machine;
+    while (test != NULL) {
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "machine: %s", test->title);
+        test = test->next;
+    }
+
 //    malloc(sizeof(Machine));
 //    current_machine->mkey = M_TRICEPS;
 //    current_machine->next = NULL;
@@ -425,14 +482,14 @@ void show_window_with_timer(void) {
 //    current_machine->set_1 = 11;
 //    current_machine->set_2 = 12;
 //    current_machine->set_3 = 13;
-
+/*
     APP_LOG(APP_LOG_LEVEL_DEBUG, "warmpup init = %d", (*current_machine).warmup_kg);
 
     current_machine->warmup_kg_str = malloc(4);
     current_machine->normal_kg_str = malloc(4);
     current_machine->set_1_str = malloc(4);
     current_machine->set_2_str = malloc(4);
-    current_machine->set_3_str = malloc(4);
+    current_machine->set_3_str = malloc(4);*/
 
     update_machine();
 
