@@ -4,7 +4,7 @@
 #include <pebble.h>
 
 enum MACHINE_TYPES {
-    M_WARMUP = 0x0,
+    M_WARMUP,
     M_SHOULDERS,
     M_CHEST,
     M_TRICEPS,
@@ -27,6 +27,10 @@ enum FIELD_TYPE {
     F_SET_3,
     F__COUNT
 };
+enum {
+    DATA_MACHINES = 0
+};
+char data_buffer[300];
 
 Layer* editable_fields[F__COUNT];
 size_t current_field;
@@ -62,6 +66,7 @@ static GFont s_res_bitham_30_black;
 static GFont s_res_gothic_28_bold;
 static GFont s_res_gothic_24;
 static GBitmap *s_res_squares_selected;
+static GFont s_res_gothic_24_bold;
 static TextLayer *s_set_3;
 static TextLayer *s_set_2;
 static TextLayer *s_set_1;
@@ -83,6 +88,7 @@ static void initialise_ui(void) {
     s_res_gothic_28_bold = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
     s_res_gothic_24 = fonts_get_system_font(FONT_KEY_GOTHIC_24);
     s_res_squares_selected = gbitmap_create_with_resource(RESOURCE_ID_SQUARES_SELECTED);
+    s_res_gothic_24_bold = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
     // s_set_3
     s_set_3 = text_layer_create(GRect(98, 88, 37, 35));
     text_layer_set_background_color(s_set_3, GColorClear);
@@ -137,10 +143,10 @@ static void initialise_ui(void) {
     layer_add_child(window_get_root_layer(s_window), (Layer *)s_labels_kg);
 
     // s_machine
-    s_machine = text_layer_create(GRect(4, 9, 139, 56));
+    s_machine = text_layer_create(GRect(3, 21, 138, 32));
     text_layer_set_background_color(s_machine, GColorClear);
-    text_layer_set_text(s_machine, "triceps where you straighten hands");
-    text_layer_set_font(s_machine, s_res_gothic_24);
+    text_layer_set_text(s_machine, "triceps is nice");
+    text_layer_set_font(s_machine, s_res_gothic_24_bold);
     layer_add_child(window_get_root_layer(s_window), (Layer *)s_machine);
 
     // s_bitmap_progress
@@ -183,6 +189,55 @@ static void destroy_ui(void) {
 }
 // END AUTO-GENERATED UI CODE
 
+static void load_machines_data() {
+    Machine *m = first_machine;
+
+    persist_read_string(DATA_MACHINES, data_buffer, 256);
+    parsed* p = parsed_create(data_buffer, ';');
+
+    while (m != NULL && !parsed_done(p)) {
+        int mkey = parsed_number(p);
+        if (mkey != m->mkey) {
+            APP_LOG(APP_LOG_LEVEL_DEBUG, "Wrong mkey. Skipping data load.");
+            free(p);
+            break;
+        }
+
+        m->warmup_kg = parsed_number(p);
+        m->normal_kg = parsed_number(p);
+        m->set_1 = parsed_number(p);
+        m->set_2 = parsed_number(p);
+        m->set_3 = parsed_number(p);
+        parsed_skip(p, 1);
+
+        m = m->next;
+    }
+    free(p);
+}
+
+static void save_machines_data() {
+    // "0;100;101;10;11;12;;1;102;103;13;14;15;;";
+    data_buffer[0] = 0;
+
+    char tmp[24];
+
+    Machine* m = first_machine;
+    while (m != NULL) {
+        snprintf(tmp, 24, "%d;%d;%d;%d;%d;%d;;", m->mkey, m->warmup_kg, m->normal_kg, m->set_1, m->set_2, m->set_3);
+//        APP_LOG(APP_LOG_LEVEL_DEBUG, "appending: --%s--", tmp);
+        strcat(data_buffer, tmp);
+        m = m->next;
+    }
+    if (strlen(data_buffer) > 255) {
+        APP_LOG(APP_LOG_LEVEL_ERROR, "data is too big. needs truncation.");
+        return;
+    }
+    // TODO: save
+//    APP_LOG(APP_LOG_LEVEL_DEBUG, "saved data: --%s--", data_buffer);
+
+    persist_write_string(DATA_MACHINES, data_buffer);
+}
+
 static void handle_window_unload(Window* window) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "unload called, ui was destroyed");
     destroy_ui();
@@ -204,65 +259,10 @@ static void update_machine() {
     text_layer_set_text(s_set_3, current_machine->set_3_str);
 }
 
-/*
-static void edit_number_callback(int key, int number) {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "callback: key=%d, number=%d", key, number);
-
-    switch (current_field) {
-        case F_WARMUP_KG:
-            current_machine->warmup_kg = number;
-            break;
-        case F_NORMAL_KG:
-            current_machine->normal_kg = number;
-            break;
-        case F_SET_1:
-            current_machine->set_1 = number;
-            break;
-        case F_SET_2:
-            current_machine->set_2 = number;
-            break;
-        case F_SET_3:
-            current_machine->set_3 = number;
-            break;
-        default:
-            return;
-    }
-
-    update_machine();
-}
-*/
-
 static void update_inv_layer() {
     GRect rect = layer_get_frame(editable_fields[current_field]);
     layer_set_frame((Layer *) s_inv_selector, rect);
 }
-
-/*
-static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-    int value_to_edit;
-    switch (current_field) {
-        case F_WARMUP_KG:
-            value_to_edit = current_machine->warmup_kg;
-            break;
-        case F_NORMAL_KG:
-            value_to_edit = current_machine->normal_kg;
-            break;
-        case F_SET_1:
-            value_to_edit = current_machine->set_1;
-            break;
-        case F_SET_2:
-            value_to_edit = current_machine->set_2;
-            break;
-        case F_SET_3:
-            value_to_edit = current_machine->set_3;
-            break;
-        default:
-            return;
-    }
-
-    show_window_edit_number(0, value_to_edit, edit_number_callback);
-}
-*/
 
 static void decrease_click_handler(ClickRecognizerRef recognizer, void *context) {
     switch (current_field) {
@@ -332,6 +332,8 @@ static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
+    save_machines_data();
+
     if (current_field == F__COUNT - 1) {
         current_field = 0;
     } else {
@@ -416,34 +418,6 @@ static void create_all_machines() {
     }
 }
 
-void load_machines_data() {
-
-    char* data_init = "0;100;101;10;11;12;;1;102;103;13;14;15;;";
-
-    Machine *m = first_machine;
-
-    parsed* p = parsed_create(data_init, ';');
-
-    while (m != NULL && !parsed_done(p)) {
-        int mkey = parsed_number(p);
-        if (mkey != m->mkey) {
-            APP_LOG(APP_LOG_LEVEL_DEBUG, "Wrong mkey. Skipping data load.");
-            free(p);
-            break;
-        }
-
-        m->warmup_kg = parsed_number(p);
-        m->normal_kg = parsed_number(p);
-        m->set_1 = parsed_number(p);
-        m->set_2 = parsed_number(p);
-        m->set_3 = parsed_number(p);
-        parsed_skip(p, 1);
-
-        m = m->next;
-    }
-    free(p);
-}
-
 void show_window_with_timer(void) {
     initialise_ui();
     window_set_window_handlers(s_window, (WindowHandlers) {
@@ -466,33 +440,7 @@ void show_window_with_timer(void) {
 
     current_machine = first_machine;
 
-    Machine *test = current_machine;
-    while (test != NULL) {
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "machine: %s", test->title);
-        test = test->next;
-    }
-
-//    malloc(sizeof(Machine));
-//    current_machine->mkey = M_TRICEPS;
-//    current_machine->next = NULL;
-//
-//    current_machine->title = "Triceps is no joke; mister";
-//    current_machine->warmup_kg = 105;
-//    current_machine->normal_kg = 158;
-//    current_machine->set_1 = 11;
-//    current_machine->set_2 = 12;
-//    current_machine->set_3 = 13;
-/*
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "warmpup init = %d", (*current_machine).warmup_kg);
-
-    current_machine->warmup_kg_str = malloc(4);
-    current_machine->normal_kg_str = malloc(4);
-    current_machine->set_1_str = malloc(4);
-    current_machine->set_2_str = malloc(4);
-    current_machine->set_3_str = malloc(4);*/
-
     update_machine();
-
     update_inv_layer();
 
     window_stack_push(s_window, true);
