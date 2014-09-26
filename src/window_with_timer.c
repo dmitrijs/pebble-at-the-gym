@@ -44,6 +44,7 @@ struct Machine {
     int set_1;
     int set_2;
     int set_3;
+    bool is_done;
 
     char* warmup_kg_str;
     char* normal_kg_str;
@@ -65,7 +66,6 @@ static Window *s_window;
 static GFont s_res_bitham_30_black;
 static GFont s_res_gothic_28_bold;
 static GFont s_res_gothic_24;
-static GBitmap *s_res_squares_selected;
 static GFont s_res_gothic_24_bold;
 static TextLayer *s_set_3;
 static TextLayer *s_set_2;
@@ -75,10 +75,10 @@ static TextLayer *s_rest_title;
 static TextLayer *s_warmup_kg;
 static TextLayer *s_labels_kg;
 static TextLayer *s_machine;
-static BitmapLayer *s_bitmap_progress;
 static InverterLayer *s_inv_timer;
 static TextLayer *s_normal_kg;
 static InverterLayer *s_inv_selector;
+static Layer *s_layer_1;
 
 static void initialise_ui(void) {
     s_window = window_create();
@@ -87,7 +87,6 @@ static void initialise_ui(void) {
     s_res_bitham_30_black = fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK);
     s_res_gothic_28_bold = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
     s_res_gothic_24 = fonts_get_system_font(FONT_KEY_GOTHIC_24);
-    s_res_squares_selected = gbitmap_create_with_resource(RESOURCE_ID_SQUARES_SELECTED);
     s_res_gothic_24_bold = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
     // s_set_3
     s_set_3 = text_layer_create(GRect(98, 88, 37, 35));
@@ -143,16 +142,11 @@ static void initialise_ui(void) {
     layer_add_child(window_get_root_layer(s_window), (Layer *)s_labels_kg);
 
     // s_machine
-    s_machine = text_layer_create(GRect(3, 21, 138, 32));
+    s_machine = text_layer_create(GRect(2, 18, 138, 42));
     text_layer_set_background_color(s_machine, GColorClear);
     text_layer_set_text(s_machine, "triceps is nice");
     text_layer_set_font(s_machine, s_res_gothic_24_bold);
     layer_add_child(window_get_root_layer(s_window), (Layer *)s_machine);
-
-    // s_bitmap_progress
-    s_bitmap_progress = bitmap_layer_create(GRect(2, 1, 141, 13));
-    bitmap_layer_set_bitmap(s_bitmap_progress, s_res_squares_selected);
-    layer_add_child(window_get_root_layer(s_window), (Layer *)s_bitmap_progress);
 
     // s_inv_timer
     s_inv_timer = inverter_layer_create(GRect(0, 124, 144, 28));
@@ -169,6 +163,10 @@ static void initialise_ui(void) {
     // s_inv_selector
     s_inv_selector = inverter_layer_create(GRect(8, 88, 43, 35));
     layer_add_child(window_get_root_layer(s_window), (Layer *)s_inv_selector);
+
+    // s_layer_1
+    s_layer_1 = layer_create(GRect(5, 1, 134, 13));
+    layer_add_child(window_get_root_layer(s_window), (Layer *)s_layer_1);
 }
 
 static void destroy_ui(void) {
@@ -181,11 +179,10 @@ static void destroy_ui(void) {
     text_layer_destroy(s_warmup_kg);
     text_layer_destroy(s_labels_kg);
     text_layer_destroy(s_machine);
-    bitmap_layer_destroy(s_bitmap_progress);
     inverter_layer_destroy(s_inv_timer);
     text_layer_destroy(s_normal_kg);
     inverter_layer_destroy(s_inv_selector);
-    gbitmap_destroy(s_res_squares_selected);
+    layer_destroy(s_layer_1);
 }
 // END AUTO-GENERATED UI CODE
 
@@ -257,6 +254,8 @@ static void update_machine() {
     text_layer_set_text(s_set_1, current_machine->set_1_str);
     text_layer_set_text(s_set_2, current_machine->set_2_str);
     text_layer_set_text(s_set_3, current_machine->set_3_str);
+
+    layer_mark_dirty(s_layer_1);
 }
 
 static void update_inv_layer() {
@@ -332,14 +331,15 @@ static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
-    save_machines_data();
-
     if (current_field == F__COUNT - 1) {
+        current_machine->is_done = true;
         current_field = 0;
     } else {
         current_field++;
     }
+
     update_inv_layer();
+    save_machines_data();
 }
 
 static void click_config_provider(void *context) {
@@ -369,10 +369,11 @@ static void create_all_machines() {
         m->set_1_str = malloc(4);
         m->set_2_str = malloc(4);
         m->set_3_str = malloc(4);
+        m->is_done = false;
 
         switch (i) {
             case M_WARMUP:
-                m->title = "Warmup. E.g. run.";
+                m->title = "Warmup (run)";
                 break;
             case M_SHOULDERS:
                 m->title = "Shoulders";
@@ -402,7 +403,7 @@ static void create_all_machines() {
                 m->title = "ABS (sides)";
                 break;
             case M_COOLDOWN:
-                m->title = "Cooldown. E.g. cycle.";
+                m->title = "Cooldown (cycle)";
                 break;
             default:
                 APP_LOG(APP_LOG_LEVEL_DEBUG, "!!!!!!!!!! UNKNOWN MACHINE: %d", i);
@@ -418,6 +419,27 @@ static void create_all_machines() {
     }
 }
 
+void draw_rectangles(struct Layer *layer, GContext *ctx) {
+    int16_t left_pos = 5;
+    Machine *m = first_machine;
+    while (m != NULL) {
+        GRect rect;
+        if (current_machine == m) {
+            rect = (GRect) {.origin = {left_pos - 4, 2 - 2}, .size = {9 + 8, 9 + 4}};
+        } else {
+            rect = (GRect) {.origin = {left_pos, 2}, .size = {9, 9}};
+        }
+        if (m->is_done) {
+            graphics_fill_rect(ctx, rect, 0, GCornerNone);
+        } else {
+            graphics_draw_rect(ctx, rect);
+        }
+
+        left_pos += 11;
+        m = m->next;
+    }
+}
+
 void show_window_with_timer(void) {
     initialise_ui();
     window_set_window_handlers(s_window, (WindowHandlers) {
@@ -425,6 +447,7 @@ void show_window_with_timer(void) {
     });
 
     window_set_click_config_provider(s_window, click_config_provider);
+    layer_set_update_proc(s_layer_1, draw_rectangles);
 
     editable_fields[F_TITLE] = (Layer *) s_machine;
     editable_fields[F_WARMUP_KG] = (Layer *) s_warmup_kg;
