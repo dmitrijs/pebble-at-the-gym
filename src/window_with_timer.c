@@ -1,6 +1,5 @@
 #include "window_with_timer.h"
 #include "enums.h"
-#include "window_edit_number.h"
 #include <pebble.h>
 
 enum MACHINE_TYPES {
@@ -233,6 +232,7 @@ static void update_inv_layer() {
     layer_set_frame((Layer *) s_inv_selector, rect);
 }
 
+/*
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
     int value_to_edit;
     switch (current_field) {
@@ -257,8 +257,55 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
 
     show_window_edit_number(0, value_to_edit, edit_number_callback);
 }
+*/
 
-static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
+static void decrease_click_handler(ClickRecognizerRef recognizer, void *context) {
+    switch (current_field) {
+        case F_WARMUP_KG:
+            current_machine->warmup_kg--;
+            break;
+        case F_NORMAL_KG:
+            current_machine->normal_kg--;
+            break;
+        case F_SET_1:
+            current_machine->set_1--;
+            break;
+        case F_SET_2:
+            current_machine->set_2--;
+            break;
+        case F_SET_3:
+            current_machine->set_3--;
+            break;
+        default:
+            return;
+    }
+    update_machine();
+}
+
+static void increase_click_handler(ClickRecognizerRef recognizer, void *context) {
+    switch (current_field) {
+        case F_WARMUP_KG:
+            current_machine->warmup_kg++;
+            break;
+        case F_NORMAL_KG:
+            current_machine->normal_kg++;
+            break;
+        case F_SET_1:
+            current_machine->set_1++;
+            break;
+        case F_SET_2:
+            current_machine->set_2++;
+            break;
+        case F_SET_3:
+            current_machine->set_3++;
+            break;
+        default:
+            return;
+    }
+    update_machine();
+}
+
+static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
     if (current_field == 0) {
         current_field = F__COUNT - 1;
     } else {
@@ -267,7 +314,7 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
     update_inv_layer();
 }
 
-static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
+static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
     if (current_field == F__COUNT - 1) {
         current_field = 0;
     } else {
@@ -277,9 +324,11 @@ static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 static void click_config_provider(void *context) {
-    window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
-    window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
-    window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
+    window_single_click_subscribe(BUTTON_ID_SELECT, next_click_handler);
+    window_single_click_subscribe(BUTTON_ID_BACK, prev_click_handler);
+
+    window_single_click_subscribe(BUTTON_ID_UP, increase_click_handler);
+    window_single_click_subscribe(BUTTON_ID_DOWN, decrease_click_handler);
 }
 
 void show_window_with_timer(void) {
