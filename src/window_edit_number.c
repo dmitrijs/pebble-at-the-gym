@@ -9,10 +9,10 @@ static char the_number_text[10];
 
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
 static Window *s_window;
+static GFont s_res_roboto_bold_subset_49;
 static GBitmap *s_res_up;
 static GBitmap *s_res_ok;
 static GBitmap *s_res_down;
-static GFont s_res_roboto_bold_subset_49;
 static TextLayer *s_textlayer_1;
 static ActionBarLayer *s_actionbarlayer_1;
 
@@ -21,12 +21,12 @@ static void initialise_ui(void) {
     window_set_background_color(s_window, GColorBlack);
     window_set_fullscreen(s_window, false);
 
+    s_res_roboto_bold_subset_49 = fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49);
     s_res_up = gbitmap_create_with_resource(RESOURCE_ID_UP);
     s_res_ok = gbitmap_create_with_resource(RESOURCE_ID_OK);
     s_res_down = gbitmap_create_with_resource(RESOURCE_ID_DOWN);
-    s_res_roboto_bold_subset_49 = fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49);
     // s_textlayer_1
-    s_textlayer_1 = text_layer_create(GRect(25, 39, 92, 70));
+    s_textlayer_1 = text_layer_create(GRect(15, 39, 105, 70));
     text_layer_set_background_color(s_textlayer_1, GColorBlack);
     text_layer_set_text_color(s_textlayer_1, GColorWhite);
     text_layer_set_text(s_textlayer_1, "12");
@@ -74,7 +74,7 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-    the_number--;
+    if (the_number > 0) the_number--;
     update_ui();
 }
 
