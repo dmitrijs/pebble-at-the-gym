@@ -14,13 +14,13 @@ enum MACHINE_TYPES {
     M_LEGS_ULTIMATE,
 //    M_LEGS_UP, /* excluded for now */
 //    M_LEGS_DOWN,
-    M_ABS,
+            M_ABS,
     M_ABS_SIDE,
     M_COOLDOWN
 };
 enum FIELD_TYPE {
     F_TITLE = 0, /* should be 0 */
-    F_WARMUP_KG,
+            F_WARMUP_KG,
     F_NORMAL_KG,
     F_SET_1,
     F_SET_2,
@@ -32,7 +32,7 @@ enum {
 };
 char data_buffer[300];
 
-Layer* editable_fields[F__COUNT];
+Layer *editable_fields[F__COUNT];
 size_t current_field;
 
 typedef struct Machine Machine;
@@ -46,20 +46,20 @@ struct Machine {
     int set_3;
     bool is_done;
 
-    char* warmup_kg_str;
-    char* normal_kg_str;
-    char* set_1_str;
-    char* set_2_str;
-    char* set_3_str;
+    char *warmup_kg_str;
+    char *normal_kg_str;
+    char *set_1_str;
+    char *set_2_str;
+    char *set_3_str;
 
     Machine *next;
     Machine *prev;
 };
 
-Machine* first_machine = NULL;
-Machine* current_machine;
+Machine *first_machine = NULL;
+Machine *current_machine;
 
-InverterLayer* s_invert_all;
+InverterLayer *s_invert_all;
 
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
 static Window *s_window;
@@ -94,7 +94,7 @@ static void initialise_ui(void) {
     text_layer_set_text(s_set_3, "10");
     text_layer_set_text_alignment(s_set_3, GTextAlignmentRight);
     text_layer_set_font(s_set_3, s_res_bitham_30_black);
-    layer_add_child(window_get_root_layer(s_window), (Layer *)s_set_3);
+    layer_add_child(window_get_root_layer(s_window), (Layer *) s_set_3);
 
     // s_set_2
     s_set_2 = text_layer_create(GRect(54, 88, 36, 33));
@@ -102,7 +102,7 @@ static void initialise_ui(void) {
     text_layer_set_text(s_set_2, "14");
     text_layer_set_text_alignment(s_set_2, GTextAlignmentRight);
     text_layer_set_font(s_set_2, s_res_bitham_30_black);
-    layer_add_child(window_get_root_layer(s_window), (Layer *)s_set_2);
+    layer_add_child(window_get_root_layer(s_window), (Layer *) s_set_2);
 
     // s_set_1
     s_set_1 = text_layer_create(GRect(10, 88, 35, 33));
@@ -110,21 +110,21 @@ static void initialise_ui(void) {
     text_layer_set_text(s_set_1, "12");
     text_layer_set_text_alignment(s_set_1, GTextAlignmentRight);
     text_layer_set_font(s_set_1, s_res_bitham_30_black);
-    layer_add_child(window_get_root_layer(s_window), (Layer *)s_set_1);
+    layer_add_child(window_get_root_layer(s_window), (Layer *) s_set_1);
 
     // s_timer
     s_timer = text_layer_create(GRect(87, 122, 55, 31));
     text_layer_set_background_color(s_timer, GColorClear);
     text_layer_set_text(s_timer, "00:30");
     text_layer_set_font(s_timer, s_res_gothic_28_bold);
-    layer_add_child(window_get_root_layer(s_window), (Layer *)s_timer);
+    layer_add_child(window_get_root_layer(s_window), (Layer *) s_timer);
 
     // s_rest_title
     s_rest_title = text_layer_create(GRect(2, 123, 75, 24));
     text_layer_set_background_color(s_rest_title, GColorClear);
     text_layer_set_text(s_rest_title, "set rest");
     text_layer_set_font(s_rest_title, s_res_gothic_24);
-    layer_add_child(window_get_root_layer(s_window), (Layer *)s_rest_title);
+    layer_add_child(window_get_root_layer(s_window), (Layer *) s_rest_title);
 
     // s_warmup_kg
     s_warmup_kg = text_layer_create(GRect(0, 54, 54, 34));
@@ -132,25 +132,25 @@ static void initialise_ui(void) {
     text_layer_set_text(s_warmup_kg, "125");
     text_layer_set_text_alignment(s_warmup_kg, GTextAlignmentRight);
     text_layer_set_font(s_warmup_kg, s_res_bitham_30_black);
-    layer_add_child(window_get_root_layer(s_window), (Layer *)s_warmup_kg);
+    layer_add_child(window_get_root_layer(s_window), (Layer *) s_warmup_kg);
 
     // s_labels_kg
     s_labels_kg = text_layer_create(GRect(54, 63, 92, 31));
     text_layer_set_background_color(s_labels_kg, GColorClear);
     text_layer_set_text(s_labels_kg, "kg             kg");
     text_layer_set_font(s_labels_kg, s_res_gothic_24);
-    layer_add_child(window_get_root_layer(s_window), (Layer *)s_labels_kg);
+    layer_add_child(window_get_root_layer(s_window), (Layer *) s_labels_kg);
 
     // s_machine
     s_machine = text_layer_create(GRect(2, 18, 138, 42));
     text_layer_set_background_color(s_machine, GColorClear);
     text_layer_set_text(s_machine, "triceps is nice");
     text_layer_set_font(s_machine, s_res_gothic_24_bold);
-    layer_add_child(window_get_root_layer(s_window), (Layer *)s_machine);
+    layer_add_child(window_get_root_layer(s_window), (Layer *) s_machine);
 
     // s_inv_timer
     s_inv_timer = inverter_layer_create(GRect(0, 124, 144, 28));
-    layer_add_child(window_get_root_layer(s_window), (Layer *)s_inv_timer);
+    layer_add_child(window_get_root_layer(s_window), (Layer *) s_inv_timer);
 
     // s_normal_kg
     s_normal_kg = text_layer_create(GRect(70, 54, 54, 31));
@@ -158,15 +158,15 @@ static void initialise_ui(void) {
     text_layer_set_text(s_normal_kg, "170");
     text_layer_set_text_alignment(s_normal_kg, GTextAlignmentRight);
     text_layer_set_font(s_normal_kg, s_res_bitham_30_black);
-    layer_add_child(window_get_root_layer(s_window), (Layer *)s_normal_kg);
+    layer_add_child(window_get_root_layer(s_window), (Layer *) s_normal_kg);
 
     // s_inv_selector
     s_inv_selector = inverter_layer_create(GRect(8, 88, 43, 35));
-    layer_add_child(window_get_root_layer(s_window), (Layer *)s_inv_selector);
+    layer_add_child(window_get_root_layer(s_window), (Layer *) s_inv_selector);
 
     // s_layer_1
     s_layer_1 = layer_create(GRect(5, 1, 134, 13));
-    layer_add_child(window_get_root_layer(s_window), (Layer *)s_layer_1);
+    layer_add_child(window_get_root_layer(s_window), (Layer *) s_layer_1);
 }
 
 static void destroy_ui(void) {
@@ -190,7 +190,7 @@ static void load_machines_data() {
     Machine *m = first_machine;
 
     persist_read_string(DATA_MACHINES, data_buffer, 256);
-    parsed* p = parsed_create(data_buffer, ';');
+    parsed *p = parsed_create(data_buffer, ';');
 
     while (m != NULL && !parsed_done(p)) {
         int mkey = parsed_number(p);
@@ -218,7 +218,7 @@ static void save_machines_data() {
 
     char tmp[24];
 
-    Machine* m = first_machine;
+    Machine *m = first_machine;
     while (m != NULL) {
         snprintf(tmp, 24, "%d;%d;%d;%d;%d;%d;;", m->mkey, m->warmup_kg, m->normal_kg, m->set_1, m->set_2, m->set_3);
 //        APP_LOG(APP_LOG_LEVEL_DEBUG, "appending: --%s--", tmp);
@@ -235,7 +235,7 @@ static void save_machines_data() {
     persist_write_string(DATA_MACHINES, data_buffer);
 }
 
-static void handle_window_unload(Window* window) {
+static void handle_window_unload(Window *window) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "unload called, ui was destroyed");
     destroy_ui();
 }
@@ -352,10 +352,10 @@ static void click_config_provider(void *context) {
 
 static void create_all_machines() {
 
-    Machine* last_created_machine = NULL;
+    Machine *last_created_machine = NULL;
 
     for (int i = M_WARMUP; i <= M_COOLDOWN; i++) {
-        Machine* m = malloc(sizeof(Machine));
+        Machine *m = malloc(sizeof(Machine));
         m->mkey = i;
         m->next = NULL;
         m->prev = last_created_machine;

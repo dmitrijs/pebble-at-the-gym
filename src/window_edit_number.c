@@ -32,7 +32,7 @@ static void initialise_ui(void) {
     text_layer_set_text(s_textlayer_1, "12");
     text_layer_set_text_alignment(s_textlayer_1, GTextAlignmentCenter);
     text_layer_set_font(s_textlayer_1, s_res_roboto_bold_subset_49);
-    layer_add_child(window_get_root_layer(s_window), (Layer *)s_textlayer_1);
+    layer_add_child(window_get_root_layer(s_window), (Layer *) s_textlayer_1);
 
     // s_actionbarlayer_1
     s_actionbarlayer_1 = action_bar_layer_create();
@@ -41,7 +41,7 @@ static void initialise_ui(void) {
     action_bar_layer_set_icon(s_actionbarlayer_1, BUTTON_ID_UP, s_res_up);
     action_bar_layer_set_icon(s_actionbarlayer_1, BUTTON_ID_SELECT, s_res_ok);
     action_bar_layer_set_icon(s_actionbarlayer_1, BUTTON_ID_DOWN, s_res_down);
-    layer_add_child(window_get_root_layer(s_window), (Layer *)s_actionbarlayer_1);
+    layer_add_child(window_get_root_layer(s_window), (Layer *) s_actionbarlayer_1);
 }
 
 static void destroy_ui(void) {
@@ -54,7 +54,7 @@ static void destroy_ui(void) {
 }
 // END AUTO-GENERATED UI CODE
 
-static void handle_window_unload(Window* window) {
+static void handle_window_unload(Window *window) {
     destroy_ui();
 }
 
@@ -78,7 +78,7 @@ static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
     update_ui();
 }
 
-static void click_config_provider(void* context) {
+static void click_config_provider(void *context) {
     window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
     window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
     window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
