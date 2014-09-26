@@ -3,10 +3,56 @@
 #include "window_edit_number.h"
 #include <pebble.h>
 
-#define EDITABLE_FIELDS_SIZE 6
+enum MACHINE_TYPES {
+    M_WARMUP = 0x10,
+    M_SHOULDERS,
+    M_CHEST,
+    M_TRICEPS,
+    M_BICEPS,
+    M_UPPER_BACK,
+    M_LOWER_BACK,
+    M_LEGS_ULTIMATE,
+    M_LEGS_UP,
+    M_LEGS_DOWN,
+    M_ABS,
+    M_ABS_SIDE,
+    M_COOLDOWN
+};
+enum FIELD_TYPE {
+    F_TITLE = 0, /* should be 0 */
+    F_WARMUP_KG,
+    F_NORMAL_KG,
+    F_SET_1,
+    F_SET_2,
+    F_SET_3,
+    F__COUNT
+};
 
-Layer* editable_fields[EDITABLE_FIELDS_SIZE];
-size_t selected_field_index;
+Layer* editable_fields[F__COUNT];
+size_t current_field;
+
+typedef struct Machine Machine;
+struct Machine {
+    int mkey;
+    char *title;
+    int warmup_kg;
+    int normal_kg;
+    int set_1;
+    int set_2;
+    int set_3;
+
+    char* warmup_kg_str;
+    char* normal_kg_str;
+    char* set_1_str;
+    char* set_2_str;
+    char* set_3_str;
+
+    Machine *next;
+};
+
+Machine* current_machine;
+
+InverterLayer* s_invert_all;
 
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
 static Window *s_window;
@@ -136,36 +182,96 @@ static void destroy_ui(void) {
 // END AUTO-GENERATED UI CODE
 
 static void handle_window_unload(Window* window) {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "unload called, ui was destroyed");
     destroy_ui();
+}
+
+static void update_machine() {
+    text_layer_set_text(s_machine, current_machine->title);
+
+    snprintf(current_machine->warmup_kg_str, 4, "%d", current_machine->warmup_kg);
+    snprintf(current_machine->normal_kg_str, 4, "%d", current_machine->normal_kg);
+    snprintf(current_machine->set_1_str, 4, "%d", current_machine->set_1);
+    snprintf(current_machine->set_2_str, 4, "%d", current_machine->set_2);
+    snprintf(current_machine->set_3_str, 4, "%d", current_machine->set_3);
+
+    text_layer_set_text(s_warmup_kg, current_machine->warmup_kg_str);
+    text_layer_set_text(s_normal_kg, current_machine->normal_kg_str);
+    text_layer_set_text(s_set_1, current_machine->set_1_str);
+    text_layer_set_text(s_set_2, current_machine->set_2_str);
+    text_layer_set_text(s_set_3, current_machine->set_3_str);
 }
 
 static void edit_number_callback(int key, int number) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "callback: key=%d, number=%d", key, number);
+
+    switch (current_field) {
+        case F_WARMUP_KG:
+            current_machine->warmup_kg = number;
+            break;
+        case F_NORMAL_KG:
+            current_machine->normal_kg = number;
+            break;
+        case F_SET_1:
+            current_machine->set_1 = number;
+            break;
+        case F_SET_2:
+            current_machine->set_2 = number;
+            break;
+        case F_SET_3:
+            current_machine->set_3 = number;
+            break;
+        default:
+            return;
+    }
+
+    update_machine();
 }
 
 static void update_inv_layer() {
-    GRect rect = layer_get_frame(editable_fields[selected_field_index]);
+    GRect rect = layer_get_frame(editable_fields[current_field]);
     layer_set_frame((Layer *) s_inv_selector, rect);
 }
 
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-    show_window_edit_number(0, 0, NULL);
+    int value_to_edit;
+    switch (current_field) {
+        case F_WARMUP_KG:
+            value_to_edit = current_machine->warmup_kg;
+            break;
+        case F_NORMAL_KG:
+            value_to_edit = current_machine->normal_kg;
+            break;
+        case F_SET_1:
+            value_to_edit = current_machine->set_1;
+            break;
+        case F_SET_2:
+            value_to_edit = current_machine->set_2;
+            break;
+        case F_SET_3:
+            value_to_edit = current_machine->set_3;
+            break;
+        default:
+            return;
+    }
+
+    show_window_edit_number(0, value_to_edit, edit_number_callback);
 }
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
-    if (selected_field_index == 0) {
-        selected_field_index = EDITABLE_FIELDS_SIZE - 1;
+    if (current_field == 0) {
+        current_field = F__COUNT - 1;
     } else {
-        selected_field_index--;
+        current_field--;
     }
     update_inv_layer();
 }
 
 static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-    if (selected_field_index == EDITABLE_FIELDS_SIZE - 1) {
-        selected_field_index = 0;
+    if (current_field == F__COUNT - 1) {
+        current_field = 0;
     } else {
-        selected_field_index++;
+        current_field++;
     }
     update_inv_layer();
 }
@@ -184,18 +290,42 @@ void show_window_with_timer(void) {
 
     window_set_click_config_provider(s_window, click_config_provider);
 
-    editable_fields[0] = (Layer *) s_machine;
-    editable_fields[1] = (Layer *) s_warmup_kg;
-    editable_fields[2] = (Layer *) s_normal_kg;
-    editable_fields[3] = (Layer *) s_set_1;
-    editable_fields[4] = (Layer *) s_set_2;
-    editable_fields[5] = (Layer *) s_set_3;
+    editable_fields[F_TITLE] = (Layer *) s_machine;
+    editable_fields[F_WARMUP_KG] = (Layer *) s_warmup_kg;
+    editable_fields[F_NORMAL_KG] = (Layer *) s_normal_kg;
+    editable_fields[F_SET_1] = (Layer *) s_set_1;
+    editable_fields[F_SET_2] = (Layer *) s_set_2;
+    editable_fields[F_SET_3] = (Layer *) s_set_3;
 
-    selected_field_index = 0;
+    current_field = F_SET_1;
+
+    current_machine = malloc(sizeof(Machine));
+    current_machine->mkey = M_TRICEPS;
+    current_machine->next = NULL;
+
+    current_machine->title = "Triceps is no joke; mister";
+    current_machine->warmup_kg = 105;
+    current_machine->normal_kg = 158;
+    current_machine->set_1 = 11;
+    current_machine->set_2 = 12;
+    current_machine->set_3 = 13;
+
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "warmpup init = %d", (*current_machine).warmup_kg);
+
+    current_machine->warmup_kg_str = malloc(4);
+    current_machine->normal_kg_str = malloc(4);
+    current_machine->set_1_str = malloc(4);
+    current_machine->set_2_str = malloc(4);
+    current_machine->set_3_str = malloc(4);
+
+    update_machine();
 
     update_inv_layer();
 
     window_stack_push(s_window, true);
+
+//    s_invert_all = inverter_layer_create(layer_get_bounds(window_get_root_layer(s_window)));
+//    layer_add_child(window_get_root_layer(s_window), (Layer *) s_invert_all);
 }
 
 void hide_window_with_timer(void) {
