@@ -235,9 +235,27 @@ static void save_machines_data() {
     persist_write_string(DATA_MACHINES, data_buffer);
 }
 
+static void destroy_machines() {
+    Machine *m = first_machine;
+
+    while (m != NULL) {
+        free(m->warmup_kg_str);
+        free(m->normal_kg_str);
+        free(m->set_1_str);
+        free(m->set_2_str);
+        free(m->set_3_str);
+
+        Machine *next = m->next;
+        free(m);
+
+        m = next;
+    }
+}
+
 static void handle_window_unload(Window *window) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "unload called, ui was destroyed");
     destroy_ui();
+    destroy_machines();
 }
 
 static void update_machine() {
@@ -423,9 +441,10 @@ void draw_rectangles(struct Layer *layer, GContext *ctx) {
     Machine *m = first_machine;
     while (m != NULL) {
         GRect rect;
+        bool double_border = false;
         if (current_machine == m) {
-            rect = (GRect) {.origin = {left_pos - 4, top_pos - 3}, .size = {9 + 8, 9 + 6}};
-            rect = (GRect) {.origin = {left_pos - 3, top_pos - 2}, .size = {9 + 6, 9 + 4}};
+            rect = (GRect) {.origin = {(int16_t) (left_pos - 4), (int16_t) (top_pos - 3)}, .size = {9 + 8, 9 + 6}};
+            double_border = true;
         } else {
             rect = (GRect) {.origin = {left_pos, top_pos}, .size = {9, 9}};
         }
@@ -433,6 +452,10 @@ void draw_rectangles(struct Layer *layer, GContext *ctx) {
             graphics_fill_rect(ctx, rect, 0, GCornerNone);
         } else {
             graphics_draw_rect(ctx, rect);
+            if (double_border) {
+                GRect rect_double = (GRect) {.origin = {(int16_t) (rect.origin.x + 1), (int16_t) (rect.origin.y + 1)}, .size = {(int16_t) (rect.size.w - 2), (int16_t) (rect.size.h - 2)}};
+                graphics_draw_rect(ctx, rect_double);
+            }
         }
 
         left_pos += 11;
