@@ -165,7 +165,7 @@ static void initialise_ui(void) {
     layer_add_child(window_get_root_layer(s_window), (Layer *) s_inv_selector);
 
     // s_layer_1
-    s_layer_1 = layer_create(GRect(5, 1, 134, 13));
+    s_layer_1 = layer_create(GRect(7, 1, 134, 15));
     layer_add_child(window_get_root_layer(s_window), (Layer *) s_layer_1);
 }
 
@@ -418,14 +418,16 @@ static void create_all_machines() {
 }
 
 void draw_rectangles(struct Layer *layer, GContext *ctx) {
-    int16_t left_pos = 5;
+    int16_t left_pos = 4;
+    int16_t top_pos = 3;
     Machine *m = first_machine;
     while (m != NULL) {
         GRect rect;
         if (current_machine == m) {
-            rect = (GRect) {.origin = {left_pos - 4, 2 - 2}, .size = {9 + 8, 9 + 4}};
+            rect = (GRect) {.origin = {left_pos - 4, top_pos - 3}, .size = {9 + 8, 9 + 6}};
+            rect = (GRect) {.origin = {left_pos - 3, top_pos - 2}, .size = {9 + 6, 9 + 4}};
         } else {
-            rect = (GRect) {.origin = {left_pos, 2}, .size = {9, 9}};
+            rect = (GRect) {.origin = {left_pos, top_pos}, .size = {9, 9}};
         }
         if (m->is_done) {
             graphics_fill_rect(ctx, rect, 0, GCornerNone);
