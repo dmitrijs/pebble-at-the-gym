@@ -350,6 +350,12 @@ static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
     if (current_field == F__COUNT - 1) {
         current_machine->is_done = true;
         current_field = 0;
+        if (current_machine->next != NULL) {
+            current_machine = current_machine->next;
+        } else {
+            // TODO: workout is complete
+        }
+        update_machine();
     } else {
         current_field++;
     }
