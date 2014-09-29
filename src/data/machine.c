@@ -4,6 +4,35 @@
 
 char data_buffer[300];
 
+Workout workout_load_latest() {
+    persist_write_string(DATA_WORKOUT, "15;10000;12000;X-X--XXX-X-;");
+    persist_read_string(DATA_WORKOUT, data_buffer, 256);
+
+    Workout w = (Workout) {
+            .location = 0
+    };
+
+    parsed *p = parsed_create(data_buffer, ';');
+    if (parsed_done(p)) {
+        return w;
+    }
+
+    w.location = parsed_number(p);
+    w.time_start = parsed_number(p);
+    w.time_end = parsed_number(p);
+
+    char *tmp = malloc(M__COUNT + 1);
+    parsed_string(p, tmp, M__COUNT);
+
+    for (int i = 0; i < M__COUNT; i++) {
+        w.m_done[i] = tmp[i] == 'X';
+    }
+
+    free(tmp);
+    free(p);
+    return w;
+}
+
 void machines_data_load(Machine *first_machine) {
     Machine *m = first_machine;
 
@@ -39,7 +68,6 @@ void machines_data_save(Machine *first_machine) {
     Machine *m = first_machine;
     while (m != NULL) {
         snprintf(tmp, 24, "%d;%d;%d;%d;%d;%d;;", m->mkey, m->warmup_kg, m->normal_kg, m->set_1, m->set_2, m->set_3);
-//        APP_LOG(APP_LOG_LEVEL_DEBUG, "appending: --%s--", tmp);
         strcat(data_buffer, tmp);
         m = m->next;
     }
@@ -47,8 +75,6 @@ void machines_data_save(Machine *first_machine) {
         APP_LOG(APP_LOG_LEVEL_ERROR, "data is too big. needs truncation.");
         return;
     }
-    // TODO: save
-//    APP_LOG(APP_LOG_LEVEL_DEBUG, "saved data: --%s--", data_buffer);
 
     persist_write_string(DATA_MACHINES, data_buffer);
 }
@@ -75,7 +101,7 @@ Machine *machines_create_all() {
     Machine *first_machine = NULL;
     Machine *last_created_machine = NULL;
 
-    for (int i = M_WARMUP; i <= M_COOLDOWN; i++) {
+    for (int i = M_WARMUP; i < M__COUNT; i++) {
         Machine *m = malloc(sizeof(Machine));
         m->mkey = i;
         m->next = NULL;

@@ -9,6 +9,8 @@ set(SOURCE_FILES appinfo.json
     src/window_with_timer.c src/window_with_timer.h
     src/window_edit_number.c src/window_edit_number.h
     src/lib/parsed.c src/lib/parsed.h
+    src/lib/persistor.c src/lib/persistor.h
     src/data/machine.c src/data/machine.h
+    src/data/stats.c src/data/stats.h
 )
 add_executable(at_the_gym ${SOURCE_FILES})

@@ -9,6 +9,8 @@ size_t current_field;
 Machine *first_machine = NULL;
 Machine *current_machine;
 
+Workout workout;
+
 InverterLayer *s_invert_all;
 
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
@@ -269,7 +271,7 @@ static void draw_rectangles(struct Layer *layer, GContext *ctx) {
         } else {
             rect = (GRect) {.origin = {left_pos, top_pos}, .size = {9, 9}};
         }
-        if (m->is_done) {
+        if (m->is_done || workout.m_done[m->mkey]) {
             graphics_fill_rect(ctx, rect, 0, GCornerNone);
         } else {
             graphics_draw_rect(ctx, rect);
@@ -306,6 +308,8 @@ void show_window_with_timer(void) {
     machines_data_load(first_machine);
 
     current_machine = first_machine;
+
+    workout = workout_load_latest();
 
     update_machine();
     update_inv_layer();
