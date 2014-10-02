@@ -234,7 +234,9 @@ static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
 
 static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
     if (current_field == F__COUNT - 1) {
-        current_machine->is_done = true;
+        workout.m_done[current_machine->mkey] = true;
+        // TODO: persist workout
+
         current_field = 0;
         if (current_machine->next != NULL) {
             current_machine = current_machine->next;
@@ -271,7 +273,7 @@ static void draw_rectangles(struct Layer *layer, GContext *ctx) {
         } else {
             rect = (GRect) {.origin = {left_pos, top_pos}, .size = {9, 9}};
         }
-        if (m->is_done || workout.m_done[m->mkey]) {
+        if (workout.m_done[m->mkey]) {
             graphics_fill_rect(ctx, rect, 0, GCornerNone);
         } else {
             graphics_draw_rect(ctx, rect);
@@ -309,7 +311,7 @@ void show_window_with_timer(void) {
 
     current_machine = first_machine;
 
-    workout = workout_load_latest();
+    workout = workout_load_current();
 
     update_machine();
     update_inv_layer();

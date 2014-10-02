@@ -4,7 +4,11 @@
 
 char data_buffer[300];
 
-Workout workout_load_latest() {
+void workout_save(Workout workout) {
+
+}
+
+Workout workout_load_current() {
     persist_write_string(DATA_WORKOUT, "15;10000;12000;X-X--XXX-X-;");
     persist_read_string(DATA_WORKOUT, data_buffer, 256);
 
@@ -36,7 +40,7 @@ Workout workout_load_latest() {
 void machines_data_load(Machine *first_machine) {
     Machine *m = first_machine;
 
-    persist_read_string(DATA_MACHINES, data_buffer, 256);
+    persist_read_string(DATA_WORKOUT, data_buffer, 256);
     parsed *p = parsed_create(data_buffer, ';');
 
     while (m != NULL && !parsed_done(p)) {
@@ -76,7 +80,7 @@ void machines_data_save(Machine *first_machine) {
         return;
     }
 
-    persist_write_string(DATA_MACHINES, data_buffer);
+    persist_write_string(DATA_WORKOUT, data_buffer);
 }
 
 void machines_destroy(Machine *first_machine) {
@@ -116,7 +120,6 @@ Machine *machines_create_all() {
         m->set_1_str = malloc(4);
         m->set_2_str = malloc(4);
         m->set_3_str = malloc(4);
-        m->is_done = false;
 
         switch (i) {
             case M_WARMUP:

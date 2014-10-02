@@ -28,8 +28,7 @@ enum FIELD_TYPE {
     F__COUNT
 };
 enum {
-    DATA_MACHINES = 0,
-    DATA_WORKOUT = 1
+    DATA_WORKOUT = 0
 };
 
 typedef struct Machine Machine;
@@ -41,7 +40,6 @@ struct Machine {
     int set_1;
     int set_2;
     int set_3;
-    bool is_done;
 
     char *warmup_kg_str;
     char *normal_kg_str;
@@ -49,21 +47,27 @@ struct Machine {
     char *set_2_str;
     char *set_3_str;
 
+    bool is_done;
+    uint16_t time_done;
+
     Machine *next;
     Machine *prev;
 };
 
 typedef struct Workout Workout;
 struct Workout {
-    int time_start;
-    int time_end;
+    uint16_t time_start;
+    uint16_t time_end;
 
     int location;
 
     bool m_done[M__COUNT];
+    Machine *first_machine;
 };
 
-Workout workout_load_latest();
+Workout workout_load_current();
+
+void workout_save(Workout);
 
 void machines_data_load(Machine *first_machine);
 
