@@ -22,9 +22,9 @@ static void initialise_ui(void) {
     window_set_fullscreen(s_window, false);
 
     s_res_roboto_bold_subset_49 = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
-    s_res_up = gbitmap_create_with_resource(RESOURCE_ID_UP);
-    s_res_ok = gbitmap_create_with_resource(RESOURCE_ID_OK);
-    s_res_down = gbitmap_create_with_resource(RESOURCE_ID_DOWN);
+//    s_res_up = gbitmap_create_with_resource(RESOURCE_ID_UP);
+//    s_res_ok = gbitmap_create_with_resource(RESOURCE_ID_OK);
+//    s_res_down = gbitmap_create_with_resource(RESOURCE_ID_DOWN);
     // s_textlayer_1
     s_textlayer_1 = text_layer_create(GRect(4, 39, 128, 70));
     text_layer_set_background_color(s_textlayer_1, GColorBlack);
