@@ -247,7 +247,3 @@ void show_window_menu(void) {
 
     window_stack_push(window, true /* Animated */);
 }
-
-void hide_window_menu(void) {
-    window_stack_remove(window, true);
-}
