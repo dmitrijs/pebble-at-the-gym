@@ -6,6 +6,7 @@
 /**
 * first call can be ("", 0, <key>, <value>)
 */
+/*
 char *add_key_value_unsafe(char *s, size_t s_size, char *key, char *value) {
     if (DEBUG_KEY_VALUE) APP_LOG(APP_LOG_LEVEL_DEBUG, "add key/value: %s -> %s", key, value);
 
@@ -18,18 +19,11 @@ char *add_key_value_unsafe(char *s, size_t s_size, char *key, char *value) {
         if (s_size != 0) free(s);
         s = s2;
     }
-//    char *key_val = malloc(additional_len + 1);
-//    snprintf(key_val, additional_len + 1, "%s=%s;", key, value);
-//    if (DEBUG_KEY_VALUE) APP_LOG(APP_LOG_LEVEL_DEBUG, "add key_val = %s", key_val);
 
-    APP_LOG(APP_LOG_LEVEL_WARNING, "xx-1");
     strcat(s, key);
-    APP_LOG(APP_LOG_LEVEL_WARNING, "xx-2");
     strcat(s, "=");
     strcat(s, value);
     strcat(s, ";");
-    APP_LOG(APP_LOG_LEVEL_WARNING, "xx-5");
-//    free(key_val);
 
     return s;
 }
@@ -43,6 +37,7 @@ char *add_key_value_int_unsafe(char *s, size_t s_size, char *key, int value) {
     // free(si);
     return result;
 }
+*/
 
 void read_key_values_unsafe(void *ctx, char *data, KeyValueReadCallback cb) {
     if (data == NULL) {
@@ -60,7 +55,7 @@ void read_key_values_unsafe(void *ctx, char *data, KeyValueReadCallback cb) {
             key_tmp[key_i] = '\0';
             continue;
         }
-        if (data[i] == ';') {
+        if (data[i] == ';' || data[i] == ',' || data[i] == ' ') {
             in_key = true;
             val_tmp[val_i] = '\0';
 

@@ -208,10 +208,7 @@ void window_menu_load(Window *window) {
 
     Layer *window_layer = window_get_root_layer(window);
 
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "x9 heap bytes used: %d free: %d", heap_bytes_used(), heap_bytes_free());
-
     menu_layer = menu_layer_create(layer_get_frame(window_layer));
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "x9-1");
     menu_layer_set_callbacks(menu_layer, NULL, (MenuLayerCallbacks) {
             .get_num_sections = menu_get_num_sections_callback,
             .get_num_rows = menu_get_num_rows_callback,
@@ -221,12 +218,9 @@ void window_menu_load(Window *window) {
             .draw_row = menu_draw_row_callback,
             .select_click = menu_select_callback,
     });
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "x9-2");
     menu_layer_set_click_config_onto_window(menu_layer, window);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "x9-3");
 
     layer_add_child(window_layer, menu_layer_get_layer(menu_layer));
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "x10");
 }
 
 void window_menu_unload(Window *window) {

@@ -1,67 +1,25 @@
 #include <pebble.h>
 #include "machine.h"
-#include "../lib/parsed.h"
 #include "../lib/key_value_unsafe.h"
 
 char res[201];
 char tmp[201];
-char tmp2[201];
 
 Machine *machines_create_all();
 
 void machines_destroy(Machine *first_machine);
 
-Machine *machine_get_by_index(Workout *w, int index) {
-    Machine *m = w->first_machine;
-    while (m != NULL && index != 0) {
-        m = m->next;
-        index--;
-    }
-    if (index == 0) {
-        return m;
-    }
-    return NULL;
-}
-
-void machine_data_load(Machine *m, char *data) {
-    parsed *p = parsed_create(data, '.');
-
-    int mkey = parsed_number(p);
-    if (mkey != m->mkey) {
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "Wrong mkey. Skipping data load.");
-        return;
-    }
-
-    m->warmup_kg = parsed_number(p);
-    m->normal_kg = parsed_number(p);
-    m->set_1 = parsed_number(p);
-    m->set_2 = parsed_number(p);
-    m->set_3 = parsed_number(p);
-    m->is_done = parsed_number(p) == 1;
-    m->time_done = parsed_number_long(p);
-
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Machine %d was initialized.", mkey);
-
-    free(p);
-}
-
 void machine_save(Machine *m) {
-    static char m_key_str[3] = "m?";
-
-    snprintf(tmp, 200, "%d.%d.%d.", m->mkey, m->warmup_kg, m->normal_kg);
-    snprintf(tmp2, 200, "%d.%d.%d.%d.%ld.", m->set_1, m->set_2, m->set_3, (m->is_done ? 1 : 0), m->time_done);
-    strcat(tmp, tmp2);
-
-    m_key_str[1] = (char) ('A' + m->mkey);
-
-    snprintf(res, 200, "%s=%s;", m_key_str, tmp);
+    snprintf(res, 200, "id=%d ww=%d wn=%d ", m->mkey, m->warmup_kg, m->normal_kg);
+    snprintf(tmp, 200, "s1=%d s2=%d s3=%d di=%d dt=%ld;", m->set_1, m->set_2, m->set_3, (m->is_done ? 1 : 0), m->time_done);
+    strcat(res, tmp);
 
     persist_write_string((DATA_WORKOUT_CURRENT + 1 + m->mkey), res);
     APP_LOG(APP_LOG_LEVEL_WARNING, "machine saved = %s", res);
 }
 
 void workout_save_current(Workout *w) {
-    snprintf(res, 200, "wl=%d;ws=%ld;we=%ld;", w->location, w->time_start, w->time_end);
+    snprintf(res, 200, "wl=%d ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
     APP_LOG(APP_LOG_LEVEL_WARNING, "res: %s", res);
     persist_write_string(DATA_WORKOUT_CURRENT, res);
 }
@@ -73,7 +31,7 @@ bool workout_try_backup(Workout *w) {
 void read_workout_data_callback(void *ctx, char *key, char *value) {
     Workout *workout = (Workout *) ctx;
 
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "workout key -> val: %s -> %s", key, value);
+//    APP_LOG(APP_LOG_LEVEL_DEBUG, "workout key -> val: %s -> %s", key, value);
 
     switch (key[0]) {
         case 'w': {
@@ -99,17 +57,59 @@ void read_workout_data_callback(void *ctx, char *key, char *value) {
 void read_machine_data_callback(void *ctx, char *key, char *value) {
     Machine *machine = (Machine *) ctx;
 
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "workout key -> val: %s -> %s", key, value);
+//    APP_LOG(APP_LOG_LEVEL_DEBUG, "machine key -> val: %s -> %s", key, value);
 
     switch (key[0]) {
-        case 'm': {
-            if (machine->mkey != (key[1] - 'A')) {
-                APP_LOG(APP_LOG_LEVEL_DEBUG, "invalid machine index: %d", (key[1] - 'A'));
-                break;
+        case 'i': // id
+            if (key[1] == 'd') {
+                if (machine->mkey != atoi(value)) {
+                    APP_LOG(APP_LOG_LEVEL_DEBUG, "LOADED INVALID MACHINE INDEX: %d", (key[1] - 'A'));
+                }
             }
-            machine_data_load(machine, value);
-        }
             break;
+
+        case 'w': // weights
+            switch (key[1]) {
+                case 'w':
+                    machine->warmup_kg = atoi(value);
+                    break;
+                case 'n':
+                    machine->normal_kg = atoi(value);
+                    break;
+                default:
+                    break;
+            }
+            break;
+
+        case 's': // sets
+            switch (key[1]) {
+                case '1':
+                    machine->set_1 = atoi(value);
+                    break;
+                case '2':
+                    machine->set_2 = atoi(value);
+                    break;
+                case '3':
+                    machine->set_3 = atoi(value);
+                    break;
+                default:
+                    break;
+            }
+            break;
+
+        case 'd': // done
+            switch (key[1]) {
+                case 'i':
+                    machine->is_done = atoi(value) == 1;
+                    break;
+                case 't':
+                    machine->time_done = atol(value);
+                    break;
+                default:
+                    break;
+            }
+            break;
+
         default:
             break;
     }
@@ -124,15 +124,15 @@ void workout_load_current_without_machines(Workout *workout) {
 void workout_load_current(Workout *workout) {
     workout_load_current_without_machines(workout);
 
-    Machine *m = workout->first_machine;
+    Machine *machine = workout->first_machine;
 
     for (int mi = 0; mi < M__COUNT; mi++) {
-        if (m == NULL) break;
+        if (machine == NULL) break;
 
         persist_read_string(DATA_WORKOUT_CURRENT + 1 + mi, res, 200);
-        read_key_values_unsafe(m, res, read_machine_data_callback);
+        read_key_values_unsafe(machine, res, read_machine_data_callback);
 
-        m = m->next;
+        machine = machine->next;
     }
 }
 
