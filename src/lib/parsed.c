@@ -29,6 +29,23 @@ size_t parsed_number(parsed *p) {
     return (size_t) atoi(tmp);
 }
 
+long parsed_number_long(parsed *p) {
+    if (PARSED_DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "parsing number here: %s", p->data + p->_pos);
+
+    char tmp[strlen(p->data)];
+    size_t tmp_i = 0;
+    while (p->data[p->_pos] != p->delimeter) {
+        tmp[tmp_i] = p->data[p->_pos];
+        tmp_i++;
+        p->_pos++;
+    }
+    p->_pos++;
+    tmp[tmp_i] = '\0';
+
+    if (PARSED_DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "parsed_number = %s", tmp);
+    return atol(tmp);
+}
+
 void parsed_skip(parsed *p, int count) {
     p->_pos += count;
 }

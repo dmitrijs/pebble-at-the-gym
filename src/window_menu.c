@@ -193,15 +193,13 @@ void on_appear(Window *window) {
 }
 
 void check_workout_state(Window *window) {
-    Workout *w = workout_create();
-//    workout_load_current(w);
+    Workout *w = workout_create_without_machines();
+    workout_load_current_without_machines(w);
 
     if (w->time_start != 0) workout_state = STATE_ACTIVE;
     if (w->time_end != 0) workout_state = STATE_FINISHED;
 
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "x4");
     workout_destroy(w);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "x5");
 }
 
 // This initializes the menu upon window load

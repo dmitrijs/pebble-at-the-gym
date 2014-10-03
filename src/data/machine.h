@@ -67,10 +67,16 @@ struct Workout {
 
 Workout *workout_create();
 
+Workout *workout_create_without_machines();
+
 void workout_load_current(Workout *);
+
+void workout_load_current_without_machines(Workout *workout);
 
 void workout_save_current(Workout *);
 
 bool workout_try_backup(Workout *);
 
 void workout_destroy(Workout *);
+
+void machine_save(Machine *);

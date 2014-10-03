@@ -144,7 +144,7 @@ static void handle_window_unload(Window *window) {
     workout_destroy(workout);
 }
 
-static void update_machine() {
+static void update_machine_layers() {
     text_layer_set_text(s_machine, current_machine->title);
 
     snprintf(current_machine->warmup_kg_str, 4, "%d", current_machine->warmup_kg);
@@ -172,7 +172,7 @@ static void decrease_click_handler(ClickRecognizerRef recognizer, void *context)
         case F_TITLE:
             if (current_machine->next != NULL) {
                 current_machine = current_machine->next;
-                update_machine();
+                update_machine_layers();
             }
             break;
         case F_WARMUP_KG:
@@ -193,7 +193,7 @@ static void decrease_click_handler(ClickRecognizerRef recognizer, void *context)
         default:
             return;
     }
-    update_machine();
+    update_machine_layers();
 }
 
 static void increase_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -201,7 +201,7 @@ static void increase_click_handler(ClickRecognizerRef recognizer, void *context)
         case F_TITLE:
             if (current_machine->prev != NULL) {
                 current_machine = current_machine->prev;
-                update_machine();
+                update_machine_layers();
             }
             break;
         case F_WARMUP_KG:
@@ -222,7 +222,7 @@ static void increase_click_handler(ClickRecognizerRef recognizer, void *context)
         default:
             return;
     }
-    update_machine();
+    update_machine_layers();
 }
 
 static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -239,24 +239,27 @@ static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
 static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
     if (current_field == F__COUNT - 1) {
         current_machine->is_done = true;
-        // TODO: persist workout
+        if (current_machine->time_done == 0) {
+            current_machine->time_done = time(NULL);
+        }
+    }
+    machine_save(current_machine);
 
+    current_field++;
+    if (current_field == F__COUNT) {
         current_field = 0;
         if (current_machine->next != NULL) {
             current_machine = current_machine->next;
         } else {
-            // TODO: workout is complete
             if (workout->time_end == 0) {
                 workout->time_end = (long) time(NULL);
+                workout_save_current(workout);
             }
         }
-        update_machine();
-    } else {
-        current_field++;
+        update_machine_layers();
     }
 
     update_inv_layer();
-    workout_save_current(workout);
 }
 
 static void click_config_provider(void *context) {
@@ -316,16 +319,16 @@ void show_window_with_timer(bool new_workout, int location) {
     workout = workout_create();
     if (new_workout) {
         workout->location = location;
-        workout->time_start = (long) time(NULL);
+        workout->time_start = time(NULL);
     } else {
-        // workout_load_current(workout);
+        workout_load_current(workout);
     }
 
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Workout time: %ld - %ld, location: %d", workout->time_start, workout->time_end, workout->location);
 
     current_machine = workout->first_machine;
 
-    update_machine();
+    update_machine_layers();
     update_inv_layer();
 
     window_stack_push(s_window, true);

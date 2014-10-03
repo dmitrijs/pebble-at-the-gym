@@ -13,6 +13,8 @@ parsed *parsed_create(char *data, char delimeter);
 
 size_t parsed_number(parsed *p);
 
+long parsed_number_long(parsed *p);
+
 void parsed_skip(parsed *p, int count);
 
 void parsed_string(parsed *p, char *dest, size_t str_len);

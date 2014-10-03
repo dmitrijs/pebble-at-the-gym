@@ -2,9 +2,10 @@
 #include "machine.h"
 #include "../lib/parsed.h"
 #include "../lib/key_value_unsafe.h"
-#include "../lib/persistor.h"
 
-char data_buffer[300];
+char res[201];
+char tmp[201];
+char tmp2[201];
 
 Machine *machines_create_all();
 
@@ -37,83 +38,54 @@ void machine_data_load(Machine *m, char *data) {
     m->set_2 = parsed_number(p);
     m->set_3 = parsed_number(p);
     m->is_done = parsed_number(p) == 1;
-    m->time_done = (uint16_t) parsed_number(p);
+    m->time_done = parsed_number_long(p);
 
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Machine %d was initialized.", mkey);
 
     free(p);
 }
 
-void workout_save_current(Workout *w) {
-    static char res[201];
-    static char tmp[201];
-    static char tmp2[201];
+void machine_save(Machine *m) {
+    static char m_key_str[3] = "m?";
 
+    snprintf(tmp, 200, "%d.%d.%d.", m->mkey, m->warmup_kg, m->normal_kg);
+    snprintf(tmp2, 200, "%d.%d.%d.%d.%ld.", m->set_1, m->set_2, m->set_3, (m->is_done ? 1 : 0), m->time_done);
+    strcat(tmp, tmp2);
+
+    m_key_str[1] = (char) ('A' + m->mkey);
+
+    snprintf(res, 200, "%s=%s;", m_key_str, tmp);
+
+    persist_write_string((DATA_WORKOUT_CURRENT + 1 + m->mkey), res);
+    APP_LOG(APP_LOG_LEVEL_WARNING, "machine saved = %s", res);
+}
+
+void workout_save_current(Workout *w) {
     snprintf(res, 200, "wl=%d;ws=%ld;we=%ld;", w->location, w->time_start, w->time_end);
     APP_LOG(APP_LOG_LEVEL_WARNING, "res: %s", res);
     persist_write_string(DATA_WORKOUT_CURRENT, res);
-
-//    char read[512];
-//    persist_read_string(DATA_WORKOUT_CURRENT, read, 512);
-//    APP_LOG(APP_LOG_LEVEL_WARNING, "read: %s", read);
-
-    static char m_key_str[3] = "m?";
-
-    APP_LOG(APP_LOG_LEVEL_WARNING, "w = %p", w); // !!
-    APP_LOG(APP_LOG_LEVEL_WARNING, "w->first_machine = %p", w->first_machine); // !!
-
-    Machine *m = w->first_machine;
-    while (m != NULL) {
-        snprintf(tmp, 200, "%d.%d.%d.", m->mkey, m->warmup_kg, m->normal_kg);
-        snprintf(tmp2, 200, "%d.%d.%d.%d.%ld.", m->set_1, m->set_2, m->set_3, (m->is_done ? 1 : 0), m->time_done);
-        strcat(tmp, tmp2);
-
-        m_key_str[1] = (char) ('A' + m->mkey);
-
-        snprintf(res, 200, "%s=%s;", m_key_str, tmp);
-
-        persist_write_string((DATA_WORKOUT_CURRENT + 1 + m->mkey), res);
-        APP_LOG(APP_LOG_LEVEL_WARNING, "res = %s", res);
-
-        m = m->next;
-    }
-
-//    static char read2[512];
-//    persist_read_string(DATA_WORKOUT_CURRENT + 4, read2, 512);
-//    APP_LOG(APP_LOG_LEVEL_WARNING, "read2: %s", read2);
-
-    APP_LOG(APP_LOG_LEVEL_WARNING, "x12");
 }
 
 bool workout_try_backup(Workout *w) {
     return false;
 }
 
-void read_data_callback(void *ctx, char *key, char *value) {
+void read_workout_data_callback(void *ctx, char *key, char *value) {
     Workout *workout = (Workout *) ctx;
 
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "key -> val: %s -> %s", key, value);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "workout key -> val: %s -> %s", key, value);
 
     switch (key[0]) {
-        case 'm': {
-            Machine *pMachine = machine_get_by_index(workout, (key[1] - 'A'));
-            if (pMachine == NULL) {
-                APP_LOG(APP_LOG_LEVEL_DEBUG, "invalid machine index: %d", (key[1] - 'A'));
-                break;
-            }
-            machine_data_load(pMachine, value);
-        }
-            break;
         case 'w': {
             switch (key[1]) {
                 case 'l':
                     workout->location = atoi(value);
                     break;
                 case 's':
-                    workout->time_start = (uint16_t) atol(value);
+                    workout->time_start = atol(value);
                     break;
                 case 'e':
-                    workout->time_end = (uint16_t) atol(value);
+                    workout->time_end = atol(value);
                     break;
                 default:
                     break;
@@ -124,27 +96,44 @@ void read_data_callback(void *ctx, char *key, char *value) {
     }
 }
 
+void read_machine_data_callback(void *ctx, char *key, char *value) {
+    Machine *machine = (Machine *) ctx;
+
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "workout key -> val: %s -> %s", key, value);
+
+    switch (key[0]) {
+        case 'm': {
+            if (machine->mkey != (key[1] - 'A')) {
+                APP_LOG(APP_LOG_LEVEL_DEBUG, "invalid machine index: %d", (key[1] - 'A'));
+                break;
+            }
+            machine_data_load(machine, value);
+        }
+            break;
+        default:
+            break;
+    }
+}
+
+void workout_load_current_without_machines(Workout *workout) {
+    persist_read_string(DATA_WORKOUT_CURRENT, res, 200);
+
+    read_key_values_unsafe(workout, res, read_workout_data_callback);
+}
+
 void workout_load_current(Workout *workout) {
-    return;
+    workout_load_current_without_machines(workout);
 
-    size_t len = persist_read_long_string_length(DATA_WORKOUT_CURRENT);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "workout data len = %d", len);
-    if (len == 0) {
-        return;
+    Machine *m = workout->first_machine;
+
+    for (int mi = 0; mi < M__COUNT; mi++) {
+        if (m == NULL) break;
+
+        persist_read_string(DATA_WORKOUT_CURRENT + 1 + mi, res, 200);
+        read_key_values_unsafe(m, res, read_machine_data_callback);
+
+        m = m->next;
     }
-
-    char *data = malloc(len);
-    bool success = persist_read_long_string(DATA_WORKOUT_CURRENT, data);
-    if (!success) {
-        free(data);
-        return;
-    }
-
-    read_key_values_unsafe(workout, data, read_data_callback);
-
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "x1.");
-    free(data);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "x2.");
 }
 
 void machines_destroy(Machine *first_machine) {
@@ -165,7 +154,9 @@ void machines_destroy(Machine *first_machine) {
 }
 
 void workout_destroy(Workout *w) {
-    machines_destroy(w->first_machine);
+    if (w->first_machine != NULL) {
+        machines_destroy(w->first_machine);
+    }
     free(w);
 }
 
@@ -175,6 +166,15 @@ Workout *workout_create() {
     w->time_end = 0;
     w->location = -1;
     w->first_machine = machines_create_all();
+    return w;
+}
+
+Workout *workout_create_without_machines() {
+    Workout *w = malloc(sizeof(Workout));
+    w->time_start = 0;
+    w->time_end = 0;
+    w->location = -1;
+    w->first_machine = NULL;
     return w;
 }
 
