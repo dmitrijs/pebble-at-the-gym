@@ -118,6 +118,9 @@ void read_data_callback(void *ctx, char *key, char *value) {
 void workout_load_current(Workout *workout) {
     size_t len = persist_read_long_string_length(DATA_WORKOUT_CURRENT);
     APP_LOG(APP_LOG_LEVEL_DEBUG, "workout data len = %d", len);
+    if (len == 0) {
+        return;
+    }
 
     char *data = malloc(len);
     bool success = persist_read_long_string(DATA_WORKOUT_CURRENT, data);
@@ -179,7 +182,6 @@ void workout_destroy(Workout *w) {
     machines_destroy(w->first_machine);
     free(w);
 }
-
 
 Workout *workout_create() {
     Workout *w = malloc(sizeof(Workout));

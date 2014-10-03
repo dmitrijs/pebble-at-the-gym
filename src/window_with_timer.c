@@ -247,7 +247,7 @@ static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
         } else {
             // TODO: workout is complete
             if (workout->time_end == 0) {
-                workout->time_end = time_ms(NULL, NULL);
+                workout->time_end = (long) time(NULL);
             }
         }
         update_machine();
@@ -316,10 +316,7 @@ void show_window_with_timer(bool new_workout, int location) {
     workout = workout_create();
     if (new_workout) {
         workout->location = location;
-        time_t *l = malloc(sizeof(time_t));
-        time_ms(l, NULL);
-        workout->time_start = (long) l;
-
+        workout->time_start = (long) time(NULL);
     } else {
         workout_load_current(workout);
     }

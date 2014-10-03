@@ -42,8 +42,8 @@ void read_key_values_unsafe(void *ctx, char *data, KeyValueReadCallback cb) {
     }
 
     size_t len = strlen(data);
-    char *key_tmp = malloc(200);
-    char *val_tmp = malloc(200);
+    char key_tmp[10];
+    char val_tmp[200];
     size_t key_i = 0, val_i = 0;
     bool in_key = true;
     for (size_t i = 0; i < len; i++) {
@@ -71,6 +71,4 @@ void read_key_values_unsafe(void *ctx, char *data, KeyValueReadCallback cb) {
             val_i++;
         }
     }
-    free(key_tmp);
-    free(val_tmp);
 }

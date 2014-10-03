@@ -25,7 +25,7 @@ size_t parsed_number(parsed *p) {
     p->_pos++;
     tmp[tmp_i] = '\0';
 
-//    if (PARSED_DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "parsed_number = %s", tmp);
+    if (PARSED_DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "parsed_number = %s", tmp);
     return (size_t) atoi(tmp);
 }
 

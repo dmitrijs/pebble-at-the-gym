@@ -72,7 +72,12 @@ bool persist_read_long_string(uint32_t index, char *dest) {
 
         chunk_index++;
     }
-
     free(chunk);
+
+    if (strlen(dest) != len) {
+        APP_LOG(APP_LOG_LEVEL_ERROR, "read len is smaller than expected, failing");
+        return false;
+    }
+
     return true;
 }

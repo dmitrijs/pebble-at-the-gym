@@ -156,6 +156,9 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
     }
     if (workout_state == STATE_ACTIVE && cell_index->section == 0 && cell_index->row == 1) { // Cancel
         // TODO: cancel workout
+        workout_state = STATE_NOT_ACTIVE;
+        menu_layer_set_selected_index(menu_layer, (MenuIndex) {.row = 0, .section = 0}, MenuRowAlignCenter, false);
+        ///layer_mark_dirty(menu_layer_get_layer(menu_layer));
         return;
     }
     if (workout_state == STATE_FINISHED && cell_index->section == 0 && cell_index->row == 0) { // View
