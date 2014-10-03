@@ -1,6 +1,7 @@
 #include <pebble.h>
 #include "machine.h"
 #include "../lib/parsed.h"
+#include "../lib/key_value_unsafe.h"
 #include "../lib/persistor.h"
 
 char data_buffer[300];
@@ -11,56 +12,122 @@ void machines_destroy(Machine *first_machine);
 
 void machines_data_save(Machine *first_machine);
 
-void machines_data_load(Machine *first_machine);
+void machines_data_load(Machine *first_machine, char *data);
+
+Machine *machine_get_by_index(Workout *w, int index) {
+    Machine *m = w->first_machine;
+    while (m != NULL && index != 0) {
+        m = m->next;
+        index--;
+    }
+    if (index == 0) {
+        return m;
+    }
+    return NULL;
+}
+
+void machine_data_load(Machine *m, char *data) {
+    parsed *p = parsed_create(data, '.');
+
+    int mkey = parsed_number(p);
+    if (mkey != m->mkey) {
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "Wrong mkey. Skipping data load.");
+        return;
+    }
+
+    m->warmup_kg = parsed_number(p);
+    m->normal_kg = parsed_number(p);
+    m->set_1 = parsed_number(p);
+    m->set_2 = parsed_number(p);
+    m->set_3 = parsed_number(p);
+    m->is_done = parsed_number(p) == 1;
+    m->time_done = (uint16_t) parsed_number(p);
+
+    free(p);
+}
 
 void workout_save_current(Workout *w) {
-    machines_data_save(w->first_machine);
-    // persist_write_long_string(DATA_WORKOUT_CURRENT, data_buffer);
+    size_t s_size = 512;
+    char *res = malloc(s_size);
+    res[0] = '\0';
+    res = add_key_value_int_unsafe(res, s_size, "wl", w->location);
+    res = add_key_value_int_unsafe(res, s_size, "ws", w->time_start);
+    res = add_key_value_int_unsafe(res, s_size, "we", w->time_end);
+
+    // "0;100;101;10;11;12;;1;102;103;13;14;15;;";
+    data_buffer[0] = 0;
+
+    char tmp[200];
+    char m_key_str[3] = "m?";
+
+    Machine *m = w->first_machine;
+    while (m != NULL) {
+        snprintf(tmp, 200, "%d.%d.%d.%d.%d.%d.%d.%d.", m->mkey, m->warmup_kg, m->normal_kg, m->set_1, m->set_2, m->set_3, m->is_done ? 1 : 0, (int) m->time_done);
+        m_key_str[1] = (char) ('A' + m->mkey);
+        res = add_key_value_unsafe(res, s_size, m_key_str, tmp);
+
+        m = m->next;
+    }
+
+    if ((int) strlen(res) * 1.5 > s_size) {
+        APP_LOG(APP_LOG_LEVEL_WARNING, "DATA SIZE APPROACHES S_SIZE VALUE!");
+    }
+
+    persist_write_long_string(DATA_WORKOUT_CURRENT, res);
 }
 
 bool workout_try_backup(Workout *w) {
     return false;
 }
 
-void workout_load_current(Workout *workout) {
-    machines_data_load(workout->first_machine);
-    return;
-    /*persist_write_string(DATA_WORKOUT_CURRENT, "15;10000;12000;X-X--XXX-X-;");
-    persist_read_string(DATA_WORKOUT_CURRENT, data_buffer, 256);
+void read_data_callback(void *ctx, char *key, char *value) {
+    Workout *workout = (Workout *) ctx;
 
-    Workout w = (Workout) {
-            .location = 0
-    };
+    // APP_LOG(APP_LOG_LEVEL_DEBUG, "key -> val: %s -> %s", key, value);
 
-    parsed *p = parsed_create(data_buffer, ';');
-    if (parsed_done(p)) {
-//        return w;
+    switch (key[0]) {
+        case 'm': {
+            Machine *pMachine = machine_get_by_index(workout, (key[1] - 'A'));
+            if (pMachine == NULL) {
+                APP_LOG(APP_LOG_LEVEL_DEBUG, "invalid machine index: %d", (key[1] - 'A'));
+                break;
+            }
+            machine_data_load(pMachine, value);
+        }
+            break;
+        case 'w': {
+            switch (key[1]) {
+                case 'l':
+                    workout->location = atoi(value);
+                    break;
+                case 's':
+                    workout->time_start = (uint16_t) atoi(value);
+                    break;
+                case 'e':
+                    workout->time_end = (uint16_t) atoi(value);
+                    break;
+                default:
+                    break;
+            }
+        }
+        default:
+            break;
     }
-
-    w.location = parsed_number(p);
-    w.time_start = parsed_number(p);
-    w.time_end = parsed_number(p);
-
-    char *tmp = malloc(M__COUNT + 1);
-    parsed_string(p, tmp, M__COUNT);
-
-    for (int i = 0; i < M__COUNT; i++) {
-//        w.m_done[i] = tmp[i] == 'X';
-    }
-
-    free(tmp);
-    free(p);
-
-    machines_data_load(workout->first_machine);
-
-//    return w;*/
 }
 
-void machines_data_load(Machine *first_machine) {
+void workout_load_current(Workout *workout) {
+    size_t len = persist_read_long_string_length(DATA_WORKOUT_CURRENT);
+    char *data = malloc(len);
+    persist_read_long_string(DATA_WORKOUT_CURRENT, data);
+
+    read_key_values_unsafe(workout, data, read_data_callback);
+}
+
+void machines_data_load(Machine *first_machine, char *data) {
     Machine *m = first_machine;
 
-    persist_read_string(DATA_WORKOUT_CURRENT, data_buffer, 256);
-    parsed *p = parsed_create(data_buffer, ';');
+    // persist_read_string(DATA_WORKOUT_CURRENT, data_buffer, 256);
+    parsed *p = parsed_create(data, '.');
 
     while (m != NULL && !parsed_done(p)) {
         int mkey = parsed_number(p);
@@ -74,31 +141,13 @@ void machines_data_load(Machine *first_machine) {
         m->set_1 = parsed_number(p);
         m->set_2 = parsed_number(p);
         m->set_3 = parsed_number(p);
-        parsed_skip(p, 1);
+        m->set_3 = parsed_number(p);
+        m->is_done = parsed_number(p) == 1;
+        m->time_done = (uint16_t) parsed_number(p);
 
         m = m->next;
     }
     free(p);
-}
-
-void machines_data_save(Machine *first_machine) {
-    // "0;100;101;10;11;12;;1;102;103;13;14;15;;";
-    data_buffer[0] = 0;
-
-    char tmp[24];
-
-    Machine *m = first_machine;
-    while (m != NULL) {
-        snprintf(tmp, 24, "%d;%d;%d;%d;%d;%d;;", m->mkey, m->warmup_kg, m->normal_kg, m->set_1, m->set_2, m->set_3);
-        strcat(data_buffer, tmp);
-        m = m->next;
-    }
-    if (strlen(data_buffer) > 255) {
-        APP_LOG(APP_LOG_LEVEL_ERROR, "data is too big. needs truncation.");
-        return;
-    }
-
-    persist_write_string(DATA_WORKOUT_CURRENT, data_buffer);
 }
 
 void machines_destroy(Machine *first_machine) {

@@ -246,6 +246,9 @@ static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
             current_machine = current_machine->next;
         } else {
             // TODO: workout is complete
+            if (workout->time_end == 0) {
+                workout->time_end = time_ms(NULL, NULL);
+            }
         }
         update_machine();
     } else {

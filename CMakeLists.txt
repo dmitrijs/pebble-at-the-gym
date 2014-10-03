@@ -9,8 +9,8 @@ set(SOURCE_FILES appinfo.json
     src/window_with_timer.c src/window_with_timer.h
     src/lib/parsed.c src/lib/parsed.h
     src/lib/persistor.c src/lib/persistor.h
+    src/lib/key_value_unsafe.c src/lib/key_value_unsafe.h
     src/data/machine.c src/data/machine.h
-    src/data/stats.c src/data/stats.h
     src/window_menu.c src/window_menu.h
     src/window_prepare.c src/window_prepare.h
 )

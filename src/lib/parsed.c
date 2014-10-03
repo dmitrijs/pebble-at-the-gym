@@ -17,7 +17,7 @@ size_t parsed_number(parsed *p) {
 
     char tmp[strlen(p->data)];
     size_t tmp_i = 0;
-    while (p->data[p->_pos] != ';') {
+    while (p->data[p->_pos] != p->delimeter) {
         tmp[tmp_i] = p->data[p->_pos];
         tmp_i++;
         p->_pos++;
@@ -25,7 +25,7 @@ size_t parsed_number(parsed *p) {
     p->_pos++;
     tmp[tmp_i] = '\0';
 
-    if (PARSED_DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "parsed_number = %s", tmp);
+//    if (PARSED_DEBUG) APP_LOG(APP_LOG_LEVEL_DEBUG, "parsed_number = %s", tmp);
     return (size_t) atoi(tmp);
 }
 
