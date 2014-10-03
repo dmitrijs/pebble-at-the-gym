@@ -49,7 +49,7 @@ struct Machine {
     char *set_3_str;
 
     bool is_done;
-    uint16_t time_done;
+    long time_done;
 
     Machine *next;
     Machine *prev;
@@ -57,8 +57,8 @@ struct Machine {
 
 typedef struct Workout Workout;
 struct Workout {
-    uint16_t time_start;
-    uint16_t time_end;
+    long time_start;
+    long time_end;
 
     int location;
 

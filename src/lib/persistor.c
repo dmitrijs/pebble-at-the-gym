@@ -50,15 +50,29 @@ size_t persist_read_long_string_length(uint32_t index) {
     return (size_t) persist_read_int(index);
 }
 
-void persist_read_long_string(uint32_t index, char *dest) {
+bool persist_read_long_string(uint32_t index, char *dest) {
     size_t len = (size_t) persist_read_int(index);
 
     size_t chunk_len = (size_t) persist_read_int(index + 1);
 
+    char *chunk = malloc(chunk_len + 1);
+
     uint32_t chunk_index = 0;
     while (chunk_index * chunk_len < len) {
+        persist_read_string(index + 2 + chunk_index, chunk, chunk_len + 1);
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "chunk = %s", chunk);
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "chunk len = %d", (int) strlen(chunk));
+        if (strlen(chunk) == 0) {
+            APP_LOG(APP_LOG_LEVEL_ERROR, "chunk is empty, failing");
+            free(chunk);
+            return false;
+        }
+
         persist_read_string(index + 2 + chunk_index, dest + (chunk_index * chunk_len), chunk_len + 1);
 
         chunk_index++;
     }
+
+    free(chunk);
+    return true;
 }

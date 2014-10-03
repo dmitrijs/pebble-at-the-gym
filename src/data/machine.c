@@ -83,7 +83,7 @@ bool workout_try_backup(Workout *w) {
 void read_data_callback(void *ctx, char *key, char *value) {
     Workout *workout = (Workout *) ctx;
 
-    // APP_LOG(APP_LOG_LEVEL_DEBUG, "key -> val: %s -> %s", key, value);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "key -> val: %s -> %s", key, value);
 
     switch (key[0]) {
         case 'm': {
@@ -101,10 +101,10 @@ void read_data_callback(void *ctx, char *key, char *value) {
                     workout->location = atoi(value);
                     break;
                 case 's':
-                    workout->time_start = (uint16_t) atoi(value);
+                    workout->time_start = (uint16_t) atol(value);
                     break;
                 case 'e':
-                    workout->time_end = (uint16_t) atoi(value);
+                    workout->time_end = (uint16_t) atol(value);
                     break;
                 default:
                     break;
@@ -117,10 +117,18 @@ void read_data_callback(void *ctx, char *key, char *value) {
 
 void workout_load_current(Workout *workout) {
     size_t len = persist_read_long_string_length(DATA_WORKOUT_CURRENT);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "workout data len = %d", len);
+
     char *data = malloc(len);
-    persist_read_long_string(DATA_WORKOUT_CURRENT, data);
+    bool success = persist_read_long_string(DATA_WORKOUT_CURRENT, data);
+    if (!success) {
+        free(data);
+        return;
+    }
 
     read_key_values_unsafe(workout, data, read_data_callback);
+
+    free(data);
 }
 
 void machines_data_load(Machine *first_machine, char *data) {

@@ -1,6 +1,6 @@
 #pragma once
 
-void persist_read_long_string(uint32_t index, char *dest);
+bool persist_read_long_string(uint32_t index, char *dest);
 
 size_t persist_read_long_string_length(uint32_t index);
 

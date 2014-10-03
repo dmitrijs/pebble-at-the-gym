@@ -1,28 +1,14 @@
 #include "pebble.h"
 #include "window_prepare.h"
 #include "window_with_timer.h"
+#include "window_location.h"
+#include "window_menu.h"
 
 static Window *window;
 static MenuLayer *menu_layer;
 
-bool workout_is_active = false;
-
 /*typedef struct {
-    char* title;
-    char* subtitle;
-    int normal_kg;
-    int set_1;
-    int set_2;
-    int set_3;
 
-    char *warmup_kg_str;
-    char *normal_kg_str;
-    char *set_1_str;
-    char *set_2_str;
-    char *set_3_str;
-
-    bool is_done;
-    uint16_t time_done;
 } MenuItemDefinition;
 
 typedef struct MenuItem MenuItem;
@@ -35,6 +21,13 @@ typedef struct {
     MenuItem* first_item;
 } Menu;*/
 
+typedef enum {
+    STATE_NOT_ACTIVE,
+    STATE_ACTIVE,
+    STATE_FINISHED
+} WorkoutState;
+
+WorkoutState workout_state = STATE_NOT_ACTIVE;
 
 static uint16_t menu_get_num_sections_callback(MenuLayer *menu_layer, void *data) {
     return 2;
@@ -43,10 +36,10 @@ static uint16_t menu_get_num_sections_callback(MenuLayer *menu_layer, void *data
 static uint16_t menu_get_num_rows_callback(MenuLayer *menu_layer, uint16_t section_index, void *data) {
     switch (section_index) {
         case 0:
-            if (workout_is_active) {
-                return 2;
-            } else {
+            if (workout_state == STATE_NOT_ACTIVE) {
                 return 1;
+            } else {
+                return 2;
             }
 
         case 1:
@@ -63,7 +56,7 @@ static int16_t menu_get_header_height_callback(MenuLayer *menu_layer, uint16_t s
 
 static int16_t menu_get_cell_height_callback(MenuLayer *menu_layer, MenuIndex *menu_index, void *data) {
 
-    if ((!workout_is_active && menu_index->section == 0 && menu_index->row == 0) ||
+    if ((workout_state == STATE_NOT_ACTIVE && menu_index->section == 0 && menu_index->row == 0) ||
             (menu_index->section == 1 && menu_index->row == 0)) {
         return 30;
     }
@@ -84,6 +77,8 @@ static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, ui
         case 1:
             menu_cell_basic_header_draw(ctx, cell_layer, "At Home");
             break;
+        default:
+            break;
     }
 }
 
@@ -92,23 +87,43 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
     // Determine which section we're going to draw in
     switch (cell_index->section) {
         case 0:
-            // Use the row to specify which item we'll draw
-            if (workout_is_active) {
-                switch (cell_index->row) {
-                    case 0:
-                        menu_cell_basic_draw(ctx, cell_layer, "Continue", "Workout at Bolero", NULL);
-                        break;
+            switch (workout_state) {
+                case STATE_NOT_ACTIVE:
+                    switch (cell_index->row) {
+                        case 0:
+                            menu_cell_title_draw(ctx, cell_layer, "Start New");
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case STATE_ACTIVE:
+                    switch (cell_index->row) {
+                        case 0:
+                            menu_cell_basic_draw(ctx, cell_layer, "Continue", "Workout at Bolero", NULL);
+                            break;
 
-                    case 1:
-                        menu_cell_basic_draw(ctx, cell_layer, "End", "Workout at Bolero", NULL);
-                        break;
-                }
-            } else {
-                switch (cell_index->row) {
-                    case 0:
-                        menu_cell_title_draw(ctx, cell_layer, "Start New");
-                        break;
-                }
+                        case 1:
+                            menu_cell_basic_draw(ctx, cell_layer, "Cancel", "Workout at Bolero", NULL);
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case STATE_FINISHED:
+                    switch (cell_index->row) {
+                        case 0:
+                            menu_cell_basic_draw(ctx, cell_layer, "View", "Workout at Bolero", NULL);
+                            break;
+
+                        case 1:
+                            menu_cell_basic_draw(ctx, cell_layer, "End (Save)", "Workout at Bolero", NULL);
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+
             }
             break;
 
@@ -122,14 +137,34 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
                 case 1:
                     menu_cell_basic_draw(ctx, cell_layer, "Upload workouts", "0 workouts to upload", NULL);
                     break;
+                default:
+                    break;
             }
+        default:
+            break;
     }
 }
 
 // Here we capture when a user selects a menu item
 void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *data) {
-    if (!workout_is_active && cell_index->section == 0 && cell_index->row == 0) {
-        show_window_with_timer();
+    if (workout_state == STATE_NOT_ACTIVE && cell_index->section == 0 && cell_index->row == 0) { // Start
+        show_window_location();
+        return;
+    }
+    if (workout_state == STATE_ACTIVE && cell_index->section == 0 && cell_index->row == 0) { // Continue
+        show_window_with_timer(false, 0);
+        return;
+    }
+    if (workout_state == STATE_ACTIVE && cell_index->section == 0 && cell_index->row == 1) { // Cancel
+        // TODO: cancel workout
+        return;
+    }
+    if (workout_state == STATE_FINISHED && cell_index->section == 0 && cell_index->row == 0) { // View
+        show_window_with_timer(false, 0);
+        return;
+    }
+    if (workout_state == STATE_FINISHED && cell_index->section == 0 && cell_index->row == 1) { // End (Save)
+        // TODO: end workout
         return;
     }
     if (cell_index->section == 1 && cell_index->row == 0) {
@@ -145,12 +180,22 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
             // After changing the icon, mark the layer to have it updated
             layer_mark_dirty(menu_layer_get_layer(menu_layer));
             break;
+        default:
+            break;
     }
 
 }
 
+void check_workout_state(Window *window) {
+    Workout *w = workout_create();
+    workout_load_current(w);
+
+    if (w->time_start != 0) workout_state = STATE_ACTIVE;
+    if (w->time_end != 0) workout_state = STATE_FINISHED;
+}
+
 // This initializes the menu upon window load
-void window_load(Window *window) {
+void window_menu_load(Window *window) {
     Layer *window_layer = window_get_root_layer(window);
 
     menu_layer = menu_layer_create(layer_get_frame(window_layer));
@@ -168,17 +213,8 @@ void window_load(Window *window) {
     layer_add_child(window_layer, menu_layer_get_layer(menu_layer));
 }
 
-void window_unload(Window *window) {
-    // Destroy the menu layer
+void window_menu_unload(Window *window) {
     menu_layer_destroy(menu_layer);
-
-    // Cleanup the menu icons
-//    for (int i = 0; i < NUM_MENU_ICONS; i++) {
-//        gbitmap_destroy(menu_icons[i]);
-//    }
-
-    // And cleanup the background
-//    gbitmap_destroy(menu_background);
 }
 
 void show_window_menu(void) {
@@ -186,8 +222,9 @@ void show_window_menu(void) {
 
     // Setup the window handlers
     window_set_window_handlers(window, (WindowHandlers) {
-            .load = window_load,
-            .unload = window_unload,
+            .load = window_menu_load,
+            .unload = window_menu_unload,
+            .appear = check_workout_state
     });
 
     window_stack_push(window, true /* Animated */);
