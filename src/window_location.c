@@ -92,9 +92,9 @@ static void menu_location_draw_row_callback(GContext *ctx, const Layer *cell_lay
 // Here we capture when a user selects a menu item
 void menu_location_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *data) {
 
-    hide_window_location();
-
     show_window_with_timer(true /* new workout */, cell_index->section * 10 + cell_index->row);
+
+    hide_window_location();
 }
 
 // This initializes the menu upon window load

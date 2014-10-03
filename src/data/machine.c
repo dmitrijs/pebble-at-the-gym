@@ -10,10 +10,6 @@ Machine *machines_create_all();
 
 void machines_destroy(Machine *first_machine);
 
-void machines_data_save(Machine *first_machine);
-
-void machines_data_load(Machine *first_machine, char *data);
-
 Machine *machine_get_by_index(Workout *w, int index) {
     Machine *m = w->first_machine;
     while (m != NULL && index != 0) {
@@ -43,37 +39,50 @@ void machine_data_load(Machine *m, char *data) {
     m->is_done = parsed_number(p) == 1;
     m->time_done = (uint16_t) parsed_number(p);
 
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Machine %d was initialized.", mkey);
+
     free(p);
 }
 
 void workout_save_current(Workout *w) {
-    size_t s_size = 512;
-    char *res = malloc(s_size);
-    res[0] = '\0';
-    res = add_key_value_int_unsafe(res, s_size, "wl", w->location);
-    res = add_key_value_int_unsafe(res, s_size, "ws", w->time_start);
-    res = add_key_value_int_unsafe(res, s_size, "we", w->time_end);
+    static char res[201];
+    static char tmp[201];
+    static char tmp2[201];
 
-    // "0;100;101;10;11;12;;1;102;103;13;14;15;;";
-    data_buffer[0] = 0;
+    snprintf(res, 200, "wl=%d;ws=%ld;we=%ld;", w->location, w->time_start, w->time_end);
+    APP_LOG(APP_LOG_LEVEL_WARNING, "res: %s", res);
+    persist_write_string(DATA_WORKOUT_CURRENT, res);
 
-    char tmp[200];
-    char m_key_str[3] = "m?";
+//    char read[512];
+//    persist_read_string(DATA_WORKOUT_CURRENT, read, 512);
+//    APP_LOG(APP_LOG_LEVEL_WARNING, "read: %s", read);
+
+    static char m_key_str[3] = "m?";
+
+    APP_LOG(APP_LOG_LEVEL_WARNING, "w = %p", w); // !!
+    APP_LOG(APP_LOG_LEVEL_WARNING, "w->first_machine = %p", w->first_machine); // !!
 
     Machine *m = w->first_machine;
     while (m != NULL) {
-        snprintf(tmp, 200, "%d.%d.%d.%d.%d.%d.%d.%d.", m->mkey, m->warmup_kg, m->normal_kg, m->set_1, m->set_2, m->set_3, m->is_done ? 1 : 0, (int) m->time_done);
+        snprintf(tmp, 200, "%d.%d.%d.", m->mkey, m->warmup_kg, m->normal_kg);
+        snprintf(tmp2, 200, "%d.%d.%d.%d.%ld.", m->set_1, m->set_2, m->set_3, (m->is_done ? 1 : 0), m->time_done);
+        strcat(tmp, tmp2);
+
         m_key_str[1] = (char) ('A' + m->mkey);
-        res = add_key_value_unsafe(res, s_size, m_key_str, tmp);
+
+        snprintf(res, 200, "%s=%s;", m_key_str, tmp);
+
+        persist_write_string((DATA_WORKOUT_CURRENT + 1 + m->mkey), res);
+        APP_LOG(APP_LOG_LEVEL_WARNING, "res = %s", res);
 
         m = m->next;
     }
 
-    if ((int) strlen(res) * 1.5 > s_size) {
-        APP_LOG(APP_LOG_LEVEL_WARNING, "DATA SIZE APPROACHES S_SIZE VALUE!");
-    }
+//    static char read2[512];
+//    persist_read_string(DATA_WORKOUT_CURRENT + 4, read2, 512);
+//    APP_LOG(APP_LOG_LEVEL_WARNING, "read2: %s", read2);
 
-    persist_write_long_string(DATA_WORKOUT_CURRENT, res);
+    APP_LOG(APP_LOG_LEVEL_WARNING, "x12");
 }
 
 bool workout_try_backup(Workout *w) {
@@ -116,6 +125,8 @@ void read_data_callback(void *ctx, char *key, char *value) {
 }
 
 void workout_load_current(Workout *workout) {
+    return;
+
     size_t len = persist_read_long_string_length(DATA_WORKOUT_CURRENT);
     APP_LOG(APP_LOG_LEVEL_DEBUG, "workout data len = %d", len);
     if (len == 0) {
@@ -131,34 +142,9 @@ void workout_load_current(Workout *workout) {
 
     read_key_values_unsafe(workout, data, read_data_callback);
 
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "x1.");
     free(data);
-}
-
-void machines_data_load(Machine *first_machine, char *data) {
-    Machine *m = first_machine;
-
-    // persist_read_string(DATA_WORKOUT_CURRENT, data_buffer, 256);
-    parsed *p = parsed_create(data, '.');
-
-    while (m != NULL && !parsed_done(p)) {
-        int mkey = parsed_number(p);
-        if (mkey != m->mkey) {
-            APP_LOG(APP_LOG_LEVEL_DEBUG, "Wrong mkey. Skipping data load.");
-            break;
-        }
-
-        m->warmup_kg = parsed_number(p);
-        m->normal_kg = parsed_number(p);
-        m->set_1 = parsed_number(p);
-        m->set_2 = parsed_number(p);
-        m->set_3 = parsed_number(p);
-        m->set_3 = parsed_number(p);
-        m->is_done = parsed_number(p) == 1;
-        m->time_done = (uint16_t) parsed_number(p);
-
-        m = m->next;
-    }
-    free(p);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "x2.");
 }
 
 void machines_destroy(Machine *first_machine) {

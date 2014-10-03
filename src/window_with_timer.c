@@ -318,7 +318,7 @@ void show_window_with_timer(bool new_workout, int location) {
         workout->location = location;
         workout->time_start = (long) time(NULL);
     } else {
-        workout_load_current(workout);
+        // workout_load_current(workout);
     }
 
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Workout time: %ld - %ld, location: %d", workout->time_start, workout->time_end, workout->location);

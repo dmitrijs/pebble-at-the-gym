@@ -1,7 +1,7 @@
 #include <pebble.h>
 #include "key_value_unsafe.h"
 
-#define DEBUG_KEY_VALUE false
+#define DEBUG_KEY_VALUE true
 
 /**
 * first call can be ("", 0, <key>, <value>)
@@ -18,21 +18,29 @@ char *add_key_value_unsafe(char *s, size_t s_size, char *key, char *value) {
         if (s_size != 0) free(s);
         s = s2;
     }
-    char *key_val = malloc(additional_len + 1);
-    snprintf(key_val, additional_len + 1, "%s=%s;", key, value);
-    if (DEBUG_KEY_VALUE) APP_LOG(APP_LOG_LEVEL_DEBUG, "add key_val = %s", key_val);
+//    char *key_val = malloc(additional_len + 1);
+//    snprintf(key_val, additional_len + 1, "%s=%s;", key, value);
+//    if (DEBUG_KEY_VALUE) APP_LOG(APP_LOG_LEVEL_DEBUG, "add key_val = %s", key_val);
 
-    strcat(s, key_val);
-    free(key_val);
+    APP_LOG(APP_LOG_LEVEL_WARNING, "xx-1");
+    strcat(s, key);
+    APP_LOG(APP_LOG_LEVEL_WARNING, "xx-2");
+    strcat(s, "=");
+    strcat(s, value);
+    strcat(s, ";");
+    APP_LOG(APP_LOG_LEVEL_WARNING, "xx-5");
+//    free(key_val);
 
     return s;
 }
 
 char *add_key_value_int_unsafe(char *s, size_t s_size, char *key, int value) {
-    char *si = malloc(10);
+    char si[16];
+    // char *si = malloc(10);
     snprintf(si, 10, "%d", value);
+    APP_LOG(APP_LOG_LEVEL_WARNING, "str = %s", si);
     char *result = add_key_value_unsafe(s, s_size, key, si);
-    free(si);
+    // free(si);
     return result;
 }
 
