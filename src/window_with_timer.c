@@ -253,7 +253,7 @@ static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
     }
 
     update_inv_layer();
-    // TODO: machines_data_save(first_machine);
+    workout_save_current(workout);
 }
 
 static void click_config_provider(void *context) {
@@ -308,10 +308,12 @@ void show_window_with_timer(void) {
     editable_fields[F_SET_2] = (Layer *) s_set_2;
     editable_fields[F_SET_3] = (Layer *) s_set_3;
 
-    current_field = F_SET_1;
+    current_field = F_TITLE;
 
     workout = workout_create();
     workout_load_current(workout);
+
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Workout time: %d - %d, location: %d", workout->time_start, workout->time_end, workout->location);
 
     current_machine = workout->first_machine;
 

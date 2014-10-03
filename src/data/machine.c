@@ -1,6 +1,7 @@
 #include <pebble.h>
 #include "machine.h"
 #include "../lib/parsed.h"
+#include "../lib/persistor.h"
 
 char data_buffer[300];
 
@@ -13,7 +14,8 @@ void machines_data_save(Machine *first_machine);
 void machines_data_load(Machine *first_machine);
 
 void workout_save_current(Workout *w) {
-
+    machines_data_save(w->first_machine);
+    // persist_write_long_string(DATA_WORKOUT_CURRENT, data_buffer);
 }
 
 bool workout_try_backup(Workout *w) {
@@ -21,6 +23,7 @@ bool workout_try_backup(Workout *w) {
 }
 
 void workout_load_current(Workout *workout) {
+    machines_data_load(workout->first_machine);
     return;
     /*persist_write_string(DATA_WORKOUT_CURRENT, "15;10000;12000;X-X--XXX-X-;");
     persist_read_string(DATA_WORKOUT_CURRENT, data_buffer, 256);
@@ -63,7 +66,6 @@ void machines_data_load(Machine *first_machine) {
         int mkey = parsed_number(p);
         if (mkey != m->mkey) {
             APP_LOG(APP_LOG_LEVEL_DEBUG, "Wrong mkey. Skipping data load.");
-            free(p);
             break;
         }
 
@@ -152,6 +154,7 @@ Machine *machines_create_all() {
         m->set_2_str = malloc(4);
         m->set_3_str = malloc(4);
         m->is_done = false;
+        m->time_done = 0;
 
         switch (i) {
             case M_WARMUP:

@@ -62,7 +62,6 @@ struct Workout {
 
     int location;
 
-//    bool m_done[M__COUNT];
     Machine *first_machine;
 };
 
@@ -75,13 +74,3 @@ void workout_save_current(Workout *);
 bool workout_try_backup(Workout *);
 
 void workout_destroy(Workout *);
-
-/*
-void machines_data_load(Machine *first_machine);
-
-void machines_data_save(Machine *first_machine);
-
-void machines_destroy(Machine *first_machine);
-
-Machine *machines_create_all();
-*/
