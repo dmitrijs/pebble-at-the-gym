@@ -55,7 +55,6 @@ static int16_t menu_get_header_height_callback(MenuLayer *menu_layer, uint16_t s
 }
 
 static int16_t menu_get_cell_height_callback(MenuLayer *menu_layer, MenuIndex *menu_index, void *data) {
-
     if ((workout_state == STATE_NOT_ACTIVE && menu_index->section == 0 && menu_index->row == 0) ||
             (menu_index->section == 1 && menu_index->row == 0)) {
         return 30;
@@ -196,6 +195,8 @@ void check_workout_state(Window *window) {
 
 // This initializes the menu upon window load
 void window_menu_load(Window *window) {
+    check_workout_state(NULL);
+
     Layer *window_layer = window_get_root_layer(window);
 
     menu_layer = menu_layer_create(layer_get_frame(window_layer));
