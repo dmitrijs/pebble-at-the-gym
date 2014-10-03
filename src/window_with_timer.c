@@ -6,10 +6,10 @@
 Layer *editable_fields[F__COUNT];
 size_t current_field;
 
-Machine *first_machine = NULL;
+//Machine *first_machine = NULL;
 Machine *current_machine;
 
-Workout workout;
+Workout *workout;
 
 InverterLayer *s_invert_all;
 
@@ -141,7 +141,7 @@ static void destroy_ui(void) {
 static void handle_window_unload(Window *window) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "unload called, ui was destroyed");
     destroy_ui();
-    machines_destroy(first_machine);
+    workout_destroy(workout);
 }
 
 static void update_machine() {
@@ -226,6 +226,10 @@ static void increase_click_handler(ClickRecognizerRef recognizer, void *context)
 }
 
 static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
+    if (current_field == 0) {
+        hide_window_with_timer();
+        return;
+    }
     if (current_field > 0) {
         current_field--;
         update_inv_layer();
@@ -234,7 +238,7 @@ static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
 
 static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
     if (current_field == F__COUNT - 1) {
-        workout.m_done[current_machine->mkey] = true;
+        current_machine->is_done = true;
         // TODO: persist workout
 
         current_field = 0;
@@ -249,7 +253,7 @@ static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
     }
 
     update_inv_layer();
-    machines_data_save(first_machine);
+    // TODO: machines_data_save(first_machine);
 }
 
 static void click_config_provider(void *context) {
@@ -263,7 +267,7 @@ static void click_config_provider(void *context) {
 static void draw_rectangles(struct Layer *layer, GContext *ctx) {
     int16_t left_pos = 4;
     int16_t top_pos = 3;
-    Machine *m = first_machine;
+    Machine *m = workout->first_machine;
     while (m != NULL) {
         GRect rect;
         bool double_border = false;
@@ -273,7 +277,7 @@ static void draw_rectangles(struct Layer *layer, GContext *ctx) {
         } else {
             rect = (GRect) {.origin = {left_pos, top_pos}, .size = {9, 9}};
         }
-        if (workout.m_done[m->mkey]) {
+        if (m->is_done) {
             graphics_fill_rect(ctx, rect, 0, GCornerNone);
         } else {
             graphics_draw_rect(ctx, rect);
@@ -306,12 +310,10 @@ void show_window_with_timer(void) {
 
     current_field = F_SET_1;
 
-    first_machine = machines_create_all();
-    machines_data_load(first_machine);
+    workout = workout_create();
+    workout_load_current(workout);
 
-    current_machine = first_machine;
-
-    workout = workout_load_current();
+    current_machine = workout->first_machine;
 
     update_machine();
     update_inv_layer();

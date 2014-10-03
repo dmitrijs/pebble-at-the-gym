@@ -11,9 +11,7 @@ enum MACHINE_TYPES {
     M_UPPER_BACK,
     M_LOWER_BACK,
     M_LEGS_ULTIMATE,
-//    M_LEGS_UP, /* excluded for now */
-//    M_LEGS_DOWN,
-            M_ABS,
+    M_ABS,
     M_ABS_SIDE,
     M_COOLDOWN,
     M__COUNT
@@ -28,7 +26,10 @@ enum FIELD_TYPE {
     F__COUNT
 };
 enum {
-    DATA_WORKOUT = 0
+    DATA_WORKOUT_CURRENT = 0, // len + chunk_size + 16 chunks = 18 indices
+    DATA_WORKOUT_SAVE_1 = 20,
+    DATA_WORKOUT_SAVE_2 = 30,
+    DATA_WORKOUT_SAVE_3 = 40
 };
 
 typedef struct Machine Machine;
@@ -61,14 +62,21 @@ struct Workout {
 
     int location;
 
-    bool m_done[M__COUNT];
+//    bool m_done[M__COUNT];
     Machine *first_machine;
 };
 
-Workout workout_load_current();
+Workout *workout_create();
 
-void workout_save(Workout);
+void workout_load_current(Workout *);
 
+void workout_save_current(Workout *);
+
+bool workout_try_backup(Workout *);
+
+void workout_destroy(Workout *);
+
+/*
 void machines_data_load(Machine *first_machine);
 
 void machines_data_save(Machine *first_machine);
@@ -76,3 +84,4 @@ void machines_data_save(Machine *first_machine);
 void machines_destroy(Machine *first_machine);
 
 Machine *machines_create_all();
+*/

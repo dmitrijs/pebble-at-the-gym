@@ -4,13 +4,26 @@
 
 char data_buffer[300];
 
-void workout_save(Workout workout) {
+Machine *machines_create_all();
+
+void machines_destroy(Machine *first_machine);
+
+void machines_data_save(Machine *first_machine);
+
+void machines_data_load(Machine *first_machine);
+
+void workout_save_current(Workout *w) {
 
 }
 
-Workout workout_load_current() {
-    persist_write_string(DATA_WORKOUT, "15;10000;12000;X-X--XXX-X-;");
-    persist_read_string(DATA_WORKOUT, data_buffer, 256);
+bool workout_try_backup(Workout *w) {
+    return false;
+}
+
+void workout_load_current(Workout *workout) {
+    return;
+    /*persist_write_string(DATA_WORKOUT_CURRENT, "15;10000;12000;X-X--XXX-X-;");
+    persist_read_string(DATA_WORKOUT_CURRENT, data_buffer, 256);
 
     Workout w = (Workout) {
             .location = 0
@@ -18,7 +31,7 @@ Workout workout_load_current() {
 
     parsed *p = parsed_create(data_buffer, ';');
     if (parsed_done(p)) {
-        return w;
+//        return w;
     }
 
     w.location = parsed_number(p);
@@ -29,18 +42,21 @@ Workout workout_load_current() {
     parsed_string(p, tmp, M__COUNT);
 
     for (int i = 0; i < M__COUNT; i++) {
-        w.m_done[i] = tmp[i] == 'X';
+//        w.m_done[i] = tmp[i] == 'X';
     }
 
     free(tmp);
     free(p);
-    return w;
+
+    machines_data_load(workout->first_machine);
+
+//    return w;*/
 }
 
 void machines_data_load(Machine *first_machine) {
     Machine *m = first_machine;
 
-    persist_read_string(DATA_WORKOUT, data_buffer, 256);
+    persist_read_string(DATA_WORKOUT_CURRENT, data_buffer, 256);
     parsed *p = parsed_create(data_buffer, ';');
 
     while (m != NULL && !parsed_done(p)) {
@@ -80,7 +96,7 @@ void machines_data_save(Machine *first_machine) {
         return;
     }
 
-    persist_write_string(DATA_WORKOUT, data_buffer);
+    persist_write_string(DATA_WORKOUT_CURRENT, data_buffer);
 }
 
 void machines_destroy(Machine *first_machine) {
@@ -98,6 +114,21 @@ void machines_destroy(Machine *first_machine) {
 
         m = next;
     }
+}
+
+void workout_destroy(Workout *w) {
+    machines_destroy(w->first_machine);
+    free(w);
+}
+
+
+Workout *workout_create() {
+    Workout *w = malloc(sizeof(Workout));
+    w->time_start = 0;
+    w->time_end = 0;
+    w->location = -1;
+    w->first_machine = machines_create_all();
+    return w;
 }
 
 Machine *machines_create_all() {
@@ -120,6 +151,7 @@ Machine *machines_create_all() {
         m->set_1_str = malloc(4);
         m->set_2_str = malloc(4);
         m->set_3_str = malloc(4);
+        m->is_done = false;
 
         switch (i) {
             case M_WARMUP:
