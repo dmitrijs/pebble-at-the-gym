@@ -11,7 +11,7 @@ Machine *current_machine;
 
 Workout *workout;
 
-InverterLayer *s_invert_all;
+// InverterLayer *s_invert_all;
 
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
 static Window *s_window;
@@ -118,7 +118,7 @@ static void initialise_ui(void) {
 
     // s_layer_1
     s_layer_1 = layer_create(GRect(7, 1, 134, 15));
-    layer_add_child(window_get_root_layer(s_window), (Layer *) s_layer_1);
+    layer_add_child(window_get_root_layer(s_window), s_layer_1);
 }
 
 static void destroy_ui(void) {

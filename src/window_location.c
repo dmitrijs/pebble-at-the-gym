@@ -1,8 +1,6 @@
 #include "pebble.h"
 #include "window_location.h"
 #include "window_with_timer.h"
-#include "data/machine.h"
-#include "window_menu.h"
 
 static Window *window;
 static MenuLayer *menu_layer;
@@ -45,6 +43,8 @@ static void menu_location_draw_header_callback(GContext *ctx, const Layer *cell_
         case 1:
             menu_cell_basic_header_draw(ctx, cell_layer, "Mevi Gym");
             break;
+        default:
+            break;
     }
 }
 
@@ -76,6 +76,8 @@ static void menu_location_draw_row_callback(GContext *ctx, const Layer *cell_lay
                 case 6:
                     menu_cell_title_draw(ctx, cell_layer, "Radisson BLU");
                     break;
+                default:
+                    break;
             }
             break;
 
@@ -85,7 +87,11 @@ static void menu_location_draw_row_callback(GContext *ctx, const Layer *cell_lay
                     // There is title draw for something more simple than a basic menu item
                     menu_cell_title_draw(ctx, cell_layer, "Mevi Gym");
                     break;
+                default:
+                    break;
             }
+        default:
+            break;
     }
 }
 
