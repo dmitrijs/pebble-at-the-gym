@@ -57,6 +57,7 @@ struct Machine {
     Machine *prev;
 };
 
+typedef struct SaveState SaveState;
 struct SaveState {
     bool save1_in_use;
     bool save2_in_use;
@@ -90,3 +91,7 @@ bool workout_try_backup(Workout *);
 void workout_destroy(Workout *);
 
 void machine_save_current(Machine *);
+
+SaveState slots_load_state();
+
+void slots_save_state(SaveState state);

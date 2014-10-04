@@ -273,3 +273,39 @@ Machine *machines_create_all() {
     }
     return first_machine;
 }
+
+void state_read_callback(void *ctx, char *key, char *value) {
+    SaveState *state = (SaveState *) ctx;
+
+    switch (key[0]) {
+        case '1':
+            state->save1_in_use = atoi(value) == 1;
+            break;
+        case '2':
+            state->save2_in_use = atoi(value) == 1;
+            break;
+        case '3':
+            state->save3_in_use = atoi(value) == 1;
+            break;
+        default:
+            break;
+    }
+}
+
+SaveState slots_load_state() {
+    persist_read_string(DATA_WORKOUT_SAVE_STATE, res, 200);
+
+    SaveState state = (SaveState) {
+            .save1_in_use = false,
+            .save2_in_use = false,
+            .save3_in_use = false
+    };
+    read_key_values_unsafe(&state, res, state_read_callback);
+
+    return state;
+}
+
+void slots_save_state(SaveState state) {
+    snprintf(res, 200, "1=%d;2=%d;3=%d;", state.save1_in_use ? 1 : 0, state.save2_in_use ? 1 : 0, state.save3_in_use ? 1 : 0);
+    persist_write_string(DATA_WORKOUT_SAVE_STATE, res);
+}
