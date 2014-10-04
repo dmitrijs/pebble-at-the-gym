@@ -7,19 +7,52 @@
 static Window *window;
 static MenuLayer *menu_layer;
 
-/*typedef struct {
+/*typedef enum {
+    MENUITEM_START,
+    MENUITEM_END,
+    MENUITEM_CANCEL,
+    MENUITEM_PREPARE,
+    MENUITEM_UPLOAD
+} MenuItemType;
 
+typedef struct {
+    char* title;
+    char* subtitle;
+    MenuItemType type;
 } MenuItemDefinition;
 
 typedef struct MenuItem MenuItem;
 struct MenuItem {
     MenuItemDefinition* def;
-    MenuItem *next;
+    MenuItem next;
+    bool is_last;
 };
 
-typedef struct {
+*//*typedef struct {
     MenuItem* first_item;
-} Menu;*/
+} Menu;*//*
+
+MenuItemDefinition start = (MenuItemDefinition) {
+        .title = "Start",
+        .type = MENUITEM_START,
+        .subtitle = NULL
+};
+MenuItemDefinition cancel = (MenuItemDefinition) {
+        .title = "Cancel",
+        .type = MENUITEM_CANCEL,
+        .subtitle = NULL
+};
+
+MenuItem not_active = (MenuItem) {
+        .def = &start,
+        .is_last = false,
+        .next = (MenuItem) {
+                .def = &cancel,
+                .is_last = true
+        }
+};
+
+MenuItem* gym_menu = &not_active;*/
 
 typedef enum {
     STATE_NOT_ACTIVE,
@@ -170,8 +203,8 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
         workout_cancel_current();
         check_workout_state(NULL);
 
+        menu_layer_reload_data(menu_layer);
         menu_layer_set_selected_index(menu_layer, (MenuIndex) {.row = 0, .section = 0}, MenuRowAlignNone, false);
-        ///layer_mark_dirty(menu_layer_get_layer(menu_layer));
         return;
     }
     if ((workout_state == STATE_FINISHED && cell_index->section == 0 && cell_index->row == 1) || // End (Save)
