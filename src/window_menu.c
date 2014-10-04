@@ -203,7 +203,6 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
         workout_cancel_current();
         check_workout_state(NULL);
 
-        menu_layer_reload_data(menu_layer);
         menu_layer_set_selected_index(menu_layer, (MenuIndex) {.row = 0, .section = 0}, MenuRowAlignNone, false);
         return;
     }
@@ -217,19 +216,6 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
         show_window_prepare();
         return;
     }
-    // Use the row to specify which item will receive the select action
-    switch (cell_index->row) {
-        // This is the menu item with the cycling icon
-        case 1:
-            // Cycle the icon
-//            current_icon = (current_icon + 1) % NUM_MENU_ICONS;
-            // After changing the icon, mark the layer to have it updated
-//            layer_mark_dirty(menu_layer_get_layer(menu_layer));
-            break;
-        default:
-            break;
-    }
-
 }
 
 void check_workout_state(Window *window) {
@@ -240,13 +226,13 @@ void check_workout_state(Window *window) {
     if (w->time_start != 0) workout_state = STATE_ACTIVE;
     if (w->time_end != 0) workout_state = STATE_FINISHED;
 
+    menu_layer_reload_data(menu_layer);
+
     workout_destroy(w);
 }
 
 // This initializes the menu upon window load
 void window_menu_load(Window *window) {
-    check_workout_state(NULL);
-
     Layer *window_layer = window_get_root_layer(window);
 
     menu_layer = menu_layer_create(layer_get_frame(window_layer));
