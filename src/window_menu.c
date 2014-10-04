@@ -40,8 +40,6 @@ static uint16_t menu_get_num_rows_callback(MenuLayer *menu_layer, uint16_t secti
         case 0:
             if (workout_state == STATE_NOT_ACTIVE) {
                 return 1;
-            } else if (workout_state == STATE_ACTIVE) {
-                return 2;
             } else {
                 return 3;
             }
@@ -107,6 +105,10 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
                             break;
 
                         case 1:
+                            menu_cell_basic_draw(ctx, cell_layer, "End (Save)", "Workout at Bolero", NULL);
+                            break;
+
+                        case 2:
                             menu_cell_basic_draw(ctx, cell_layer, "Cancel", "Workout at Bolero", NULL);
                             break;
                         default:
@@ -158,13 +160,13 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
         show_window_location();
         return;
     }
-    if (workout_state == STATE_ACTIVE && cell_index->section == 0 && cell_index->row == 0) { // Continue
+    if ((workout_state == STATE_ACTIVE && cell_index->section == 0 && cell_index->row == 0) || // Continue
+            (workout_state == STATE_FINISHED && cell_index->section == 0 && cell_index->row == 0)) { // View
         show_window_with_timer(false, 0);
         return;
     }
-    if ((workout_state == STATE_ACTIVE && cell_index->section == 0 && cell_index->row == 1) ||
+    if ((workout_state == STATE_ACTIVE && cell_index->section == 0 && cell_index->row == 2) ||
             (workout_state == STATE_FINISHED && cell_index->section == 0 && cell_index->row == 2)) { // Cancel
-        // TODO: cancel workout
         workout_cancel_current();
         check_workout_state(NULL);
 
@@ -172,13 +174,10 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
         ///layer_mark_dirty(menu_layer_get_layer(menu_layer));
         return;
     }
-    if (workout_state == STATE_FINISHED && cell_index->section == 0 && cell_index->row == 0) { // View
-        show_window_with_timer(false, 0);
-        return;
-    }
-    if (workout_state == STATE_FINISHED && cell_index->section == 0 && cell_index->row == 1) { // End (Save)
+    if ((workout_state == STATE_FINISHED && cell_index->section == 0 && cell_index->row == 1) || // End (Save)
+            (workout_state == STATE_ACTIVE && cell_index->section == 0 && cell_index->row == 1)) { // End (Save)
         // TODO: save workout to an empty slot
-
+        //TODO: workout_try_backup_current();
         return;
     }
     if (cell_index->section == 1 && cell_index->row == 0) {
