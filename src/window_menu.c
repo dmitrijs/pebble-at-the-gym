@@ -29,6 +29,8 @@ typedef enum {
 
 WorkoutState workout_state = STATE_NOT_ACTIVE;
 
+void check_workout_state(Window *window);
+
 static uint16_t menu_get_num_sections_callback(MenuLayer *menu_layer, void *data) {
     return 2;
 }
@@ -38,8 +40,10 @@ static uint16_t menu_get_num_rows_callback(MenuLayer *menu_layer, uint16_t secti
         case 0:
             if (workout_state == STATE_NOT_ACTIVE) {
                 return 1;
-            } else {
+            } else if (workout_state == STATE_ACTIVE) {
                 return 2;
+            } else {
+                return 3;
             }
 
         case 1:
@@ -118,6 +122,10 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
                         case 1:
                             menu_cell_basic_draw(ctx, cell_layer, "End (Save)", "Workout at Bolero", NULL);
                             break;
+
+                        case 2:
+                            menu_cell_basic_draw(ctx, cell_layer, "Cancel", "Workout at Bolero", NULL);
+                            break;
                         default:
                             break;
                     }
@@ -154,10 +162,13 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
         show_window_with_timer(false, 0);
         return;
     }
-    if (workout_state == STATE_ACTIVE && cell_index->section == 0 && cell_index->row == 1) { // Cancel
+    if ((workout_state == STATE_ACTIVE && cell_index->section == 0 && cell_index->row == 1) ||
+            (workout_state == STATE_FINISHED && cell_index->section == 0 && cell_index->row == 2)) { // Cancel
         // TODO: cancel workout
-        workout_state = STATE_NOT_ACTIVE;
-        menu_layer_set_selected_index(menu_layer, (MenuIndex) {.row = 0, .section = 0}, MenuRowAlignCenter, false);
+        workout_cancel_current();
+        check_workout_state(NULL);
+
+        menu_layer_set_selected_index(menu_layer, (MenuIndex) {.row = 0, .section = 0}, MenuRowAlignNone, false);
         ///layer_mark_dirty(menu_layer_get_layer(menu_layer));
         return;
     }
@@ -166,7 +177,8 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
         return;
     }
     if (workout_state == STATE_FINISHED && cell_index->section == 0 && cell_index->row == 1) { // End (Save)
-        // TODO: end workout
+        // TODO: save workout to an empty slot
+
         return;
     }
     if (cell_index->section == 1 && cell_index->row == 0) {
@@ -188,14 +200,11 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
 
 }
 
-void on_appear(Window *window) {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "appear");
-}
-
 void check_workout_state(Window *window) {
     Workout *w = workout_create_without_machines();
     workout_load_current_without_machines(w);
 
+    workout_state = STATE_NOT_ACTIVE;
     if (w->time_start != 0) workout_state = STATE_ACTIVE;
     if (w->time_end != 0) workout_state = STATE_FINISHED;
 
@@ -234,7 +243,7 @@ void show_window_menu(void) {
     window_set_window_handlers(window, (WindowHandlers) {
             .load = window_menu_load,
             .unload = window_menu_unload,
-            .appear = on_appear
+            .appear = check_workout_state
     });
 
     window_stack_push(window, true /* Animated */);

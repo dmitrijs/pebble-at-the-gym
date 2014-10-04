@@ -9,7 +9,7 @@ Machine *machines_create_all();
 
 void machines_destroy(Machine *first_machine);
 
-void machine_save(Machine *m) {
+void machine_save_current(Machine *m) {
     snprintf(res, 200, "id=%d ww=%d wn=%d ", m->mkey, m->warmup_kg, m->normal_kg);
     snprintf(tmp, 200, "s1=%d s2=%d s3=%d di=%d dt=%ld;", m->set_1, m->set_2, m->set_3, (m->is_done ? 1 : 0), m->time_done);
     strcat(res, tmp);
@@ -160,20 +160,44 @@ void workout_destroy(Workout *w) {
     free(w);
 }
 
-Workout *workout_create() {
-    Workout *w = malloc(sizeof(Workout));
+void workout_reset(Workout *w) {
     w->time_start = 0;
     w->time_end = 0;
     w->location = -1;
+}
+
+void machine_reset(Machine *m) {
+    m->is_done = false;
+    m->time_done = 0;
+}
+
+void workout_cancel_current() {
+    Workout *w = workout_create();
+    workout_load_current(w);
+
+    workout_reset(w);
+    workout_save_current(w);
+
+    Machine *m = w->first_machine;
+    while (m != NULL) {
+        machine_reset(m);
+        machine_save_current(m);
+
+        m = m->next;
+    }
+
+    workout_destroy(w);
+}
+
+Workout *workout_create() {
+    Workout *w = workout_create_without_machines();
     w->first_machine = machines_create_all();
     return w;
 }
 
 Workout *workout_create_without_machines() {
     Workout *w = malloc(sizeof(Workout));
-    w->time_start = 0;
-    w->time_end = 0;
-    w->location = -1;
+    workout_reset(w);
     w->first_machine = NULL;
     return w;
 }

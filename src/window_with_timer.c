@@ -243,7 +243,7 @@ static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
             current_machine->time_done = time(NULL);
         }
     }
-    machine_save(current_machine);
+    machine_save_current(current_machine);
 
     current_field++;
     if (current_field == F__COUNT) {
@@ -317,11 +317,13 @@ void show_window_with_timer(bool new_workout, int location) {
     current_field = F_TITLE;
 
     workout = workout_create();
+    workout_load_current(workout);
+
     if (new_workout) {
         workout->location = location;
         workout->time_start = time(NULL);
-    } else {
-        workout_load_current(workout);
+
+        workout_save_current(workout);
     }
 
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Workout time: %ld - %ld, location: %d", workout->time_start, workout->time_end, workout->location);

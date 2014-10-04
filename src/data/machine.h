@@ -25,11 +25,13 @@ enum FIELD_TYPE {
     F_SET_3,
     F__COUNT
 };
+
 enum {
-    DATA_WORKOUT_CURRENT = 0, // len + chunk_size + 16 chunks = 18 indices
-    DATA_WORKOUT_SAVE_1 = 20,
-    DATA_WORKOUT_SAVE_2 = 30,
-    DATA_WORKOUT_SAVE_3 = 40
+    DATA_WORKOUT_CURRENT = 0, // workout + 12 machines = 13 indices
+    DATA_WORKOUT_SAVE_STATE = 100,
+    DATA_WORKOUT_SAVE_1 = 200,
+    DATA_WORKOUT_SAVE_2 = 300,
+    DATA_WORKOUT_SAVE_3 = 400
 };
 
 typedef struct Machine Machine;
@@ -55,6 +57,12 @@ struct Machine {
     Machine *prev;
 };
 
+struct SaveState {
+    bool save1_in_use;
+    bool save2_in_use;
+    bool save3_in_use;
+};
+
 typedef struct Workout Workout;
 struct Workout {
     long time_start;
@@ -75,8 +83,10 @@ void workout_load_current_without_machines(Workout *workout);
 
 void workout_save_current(Workout *);
 
+void workout_cancel_current();
+
 bool workout_try_backup(Workout *);
 
 void workout_destroy(Workout *);
 
-void machine_save(Machine *);
+void machine_save_current(Machine *);
