@@ -1,9 +1,11 @@
 #include "pebble.h"
-#include "window_prepare.h"
 #include "window_with_timer.h"
 #include "window_location.h"
 #include "window_menu.h"
-#include "window_error.h"
+#include "../prepare/window_prepare.h"
+#include "../upload/window_upload.h"
+#include "../window_error.h"
+#include "../../data/machine.h"
 
 static Window *window;
 static MenuLayer *menu_layer;
@@ -221,6 +223,10 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
     }
     if (cell_index->section == 1 && cell_index->row == 0) {
         show_window_prepare();
+        return;
+    }
+    if (cell_index->section == 1 && cell_index->row == 1) {
+        show_window_upload();
         return;
     }
 }

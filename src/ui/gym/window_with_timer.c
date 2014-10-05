@@ -1,7 +1,7 @@
 #include <pebble.h>
 
 #include "window_with_timer.h"
-#include "data/machine.h"
+#include "../../data/machine.h"
 
 Layer *editable_fields[F__COUNT];
 size_t current_field;

@@ -12,10 +12,11 @@ set(SOURCE_FILES appinfo.json
     src/lib/parsed.c src/lib/parsed.h
     src/lib/key_value_unsafe.c src/lib/key_value_unsafe.h
 
-    src/window_with_timer.c src/window_with_timer.h
-    src/window_location.c src/window_location.h
-    src/window_menu.c src/window_menu.h
-    src/window_prepare.c src/window_prepare.h
-    src/window_error.c src/window_error.h
+    src/ui/gym/window_with_timer.c src/ui/gym/window_with_timer.h
+    src/ui/gym/window_location.c src/ui/gym/window_location.h
+    src/ui/gym/window_menu.c src/ui/gym/window_menu.h
+    src/ui/prepare/window_prepare.c src/ui/prepare/window_prepare.h
+    src/ui/upload/window_upload.c src/ui/upload/window_upload.h
+    src/ui/window_error.c src/ui/window_error.h
 )
 add_executable(at_the_gym ${SOURCE_FILES})
