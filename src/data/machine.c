@@ -353,5 +353,7 @@ bool workout_end_current() {
     workout_reset(w, /*deep*/true);
     workout_save_current(w, /*deep*/true);
 
+    workout_destroy(w);
+
     return true;
 }

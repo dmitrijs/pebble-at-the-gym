@@ -16,5 +16,6 @@ set(SOURCE_FILES appinfo.json
     src/window_location.c src/window_location.h
     src/window_menu.c src/window_menu.h
     src/window_prepare.c src/window_prepare.h
+    src/window_error.c src/window_error.h
 )
 add_executable(at_the_gym ${SOURCE_FILES})

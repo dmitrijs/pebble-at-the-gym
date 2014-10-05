@@ -3,6 +3,7 @@
 #include "window_with_timer.h"
 #include "window_location.h"
 #include "window_menu.h"
+#include "window_error.h"
 
 static Window *window;
 static MenuLayer *menu_layer;
@@ -204,7 +205,7 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
             (workout_state == STATE_FINISHED && cell_index->section == 0 && cell_index->row == 1)) { // End (Save)
         bool success = workout_end_current();
         if (!success) {
-            // TODO: could not end workout. no free slots are available
+            show_window_error("All save slots are taken. Please upload some of workouts to continue.");
             return;
         }
         check_workout_state(NULL);
