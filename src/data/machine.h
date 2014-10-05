@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdbool.h>
+#include <pebble.h>
 
 enum MACHINE_TYPES {
     M_WARMUP,
@@ -82,11 +82,9 @@ void workout_load_current(Workout *);
 
 void workout_load_current_without_machines(Workout *workout);
 
-void workout_save_current(Workout *);
+void workout_save_current(Workout *w, bool deep);
 
 void workout_cancel_current();
-
-bool workout_try_backup(Workout *);
 
 void workout_destroy(Workout *);
 
@@ -94,4 +92,4 @@ void machine_save_current(Machine *);
 
 SaveState slots_load_state();
 
-void slots_save_state(SaveState state);
+bool workout_end_current();

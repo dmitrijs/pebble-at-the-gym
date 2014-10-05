@@ -9,23 +9,37 @@ Machine *machines_create_all();
 
 void machines_destroy(Machine *first_machine);
 
-void machine_save_current(Machine *m) {
+void machine_save_to_key(Machine *m, uint32_t data_key) {
     snprintf(res, 200, "id=%d ww=%d wn=%d ", m->mkey, m->warmup_kg, m->normal_kg);
     snprintf(tmp, 200, "s1=%d s2=%d s3=%d di=%d dt=%ld;", m->set_1, m->set_2, m->set_3, (m->is_done ? 1 : 0), m->time_done);
     strcat(res, tmp);
 
-    persist_write_string((DATA_WORKOUT_CURRENT + 1 + m->mkey), res);
-    APP_LOG(APP_LOG_LEVEL_WARNING, "machine saved = %s", res);
+    persist_write_string((data_key + 1 + m->mkey), res);
+    APP_LOG(APP_LOG_LEVEL_WARNING, "machine: %s", res);
 }
 
-void workout_save_current(Workout *w) {
+void machine_save_current(Machine *m) {
+    machine_save_to_key(m, DATA_WORKOUT_CURRENT);
+}
+
+void workout_save_to_key(Workout *w, bool deep, uint32_t data_key) {
+    APP_LOG(APP_LOG_LEVEL_WARNING, "saving workout to slot: %d, deep: %d", (int) data_key, (deep ? 1 : 0));
+
     snprintf(res, 200, "wl=%d ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
-    APP_LOG(APP_LOG_LEVEL_WARNING, "res: %s", res);
-    persist_write_string(DATA_WORKOUT_CURRENT, res);
+    APP_LOG(APP_LOG_LEVEL_WARNING, "workout: %s", res);
+    persist_write_string(data_key, res);
+
+    if (deep) {
+        Machine *m = w->first_machine;
+        while (m != NULL) {
+            machine_save_to_key(m, data_key);
+            m = m->next;
+        }
+    }
 }
 
-bool workout_try_backup(Workout *w) {
-    return false;
+void workout_save_current(Workout *w, bool deep) {
+    workout_save_to_key(w, deep, DATA_WORKOUT_CURRENT);
 }
 
 void read_workout_data_callback(void *ctx, char *key, char *value) {
@@ -160,31 +174,31 @@ void workout_destroy(Workout *w) {
     free(w);
 }
 
-void workout_reset(Workout *w) {
-    w->time_start = 0;
-    w->time_end = 0;
-    w->location = -1;
-}
-
 void machine_reset(Machine *m) {
     m->is_done = false;
     m->time_done = 0;
+}
+
+void workout_reset(Workout *w, bool deep) {
+    w->time_start = 0;
+    w->time_end = 0;
+    w->location = -1;
+
+    if (deep) {
+        Machine *m = w->first_machine;
+        while (m != NULL) {
+            machine_reset(m);
+            m = m->next;
+        }
+    }
 }
 
 void workout_cancel_current() {
     Workout *w = workout_create();
     workout_load_current(w);
 
-    workout_reset(w);
-    workout_save_current(w);
-
-    Machine *m = w->first_machine;
-    while (m != NULL) {
-        machine_reset(m);
-        machine_save_current(m);
-
-        m = m->next;
-    }
+    workout_reset(w, /*deep*/true);
+    workout_save_current(w, /*deep*/true);
 
     workout_destroy(w);
 }
@@ -197,7 +211,7 @@ Workout *workout_create() {
 
 Workout *workout_create_without_machines() {
     Workout *w = malloc(sizeof(Workout));
-    workout_reset(w);
+    workout_reset(w, /*deep*/false);
     w->first_machine = NULL;
     return w;
 }
@@ -307,5 +321,37 @@ SaveState slots_load_state() {
 
 void slots_save_state(SaveState state) {
     snprintf(res, 200, "1=%d;2=%d;3=%d;", state.save1_in_use ? 1 : 0, state.save2_in_use ? 1 : 0, state.save3_in_use ? 1 : 0);
+
+    APP_LOG(APP_LOG_LEVEL_WARNING, "updating state: %s", res);
     persist_write_string(DATA_WORKOUT_SAVE_STATE, res);
+}
+
+bool workout_end_current() {
+    // return false and do no changes if no slot was available to backup data
+    SaveState state = slots_load_state();
+
+    uint32_t data_position;
+    if (!state.save1_in_use) {
+        data_position = DATA_WORKOUT_SAVE_1;
+        state.save1_in_use = true;
+    } else if (!state.save2_in_use) {
+        data_position = DATA_WORKOUT_SAVE_2;
+        state.save2_in_use = true;
+    } else if (!state.save3_in_use) {
+        data_position = DATA_WORKOUT_SAVE_3;
+        state.save3_in_use = true;
+    } else {
+        return false;
+    }
+
+    Workout *w = workout_create();
+    workout_load_current(w);
+
+    workout_save_to_key(w, /*deep*/true, data_position);
+    slots_save_state(state);
+
+    workout_reset(w, /*deep*/true);
+    workout_save_current(w, /*deep*/true);
+
+    return true;
 }

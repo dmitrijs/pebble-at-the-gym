@@ -7,6 +7,8 @@
 static Window *window;
 static MenuLayer *menu_layer;
 
+char *upload_status_str = "? workout(s) to upload";
+
 /*typedef enum {
     MENUITEM_START,
     MENUITEM_END,
@@ -177,7 +179,7 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
                     break;
 
                 case 1:
-                    menu_cell_basic_draw(ctx, cell_layer, "Upload workouts", "0 workouts to upload", NULL);
+                    menu_cell_basic_draw(ctx, cell_layer, "Upload workouts", upload_status_str, NULL);
                     break;
                 default:
                     break;
@@ -200,13 +202,12 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
     }
     if ((workout_state == STATE_ACTIVE && cell_index->section == 0 && cell_index->row == 1) || // End (Save)
             (workout_state == STATE_FINISHED && cell_index->section == 0 && cell_index->row == 1)) { // End (Save)
-        // TODO: save workout to an empty slot
-        //TODO: workout_try_backup_current();
-//        workout_end_current();
-//        int slot = workout_try_backup_current();
-//        if (slot < 0) {
-//
-//        }
+        bool success = workout_end_current();
+        if (!success) {
+            // TODO: could not end workout. no free slots are available
+            return;
+        }
+        check_workout_state(NULL);
         return;
     }
     if ((workout_state == STATE_ACTIVE && cell_index->section == 0 && cell_index->row == 2) ||
@@ -230,6 +231,10 @@ void check_workout_state(Window *window) {
     workout_state = STATE_NOT_ACTIVE;
     if (w->time_start != 0) workout_state = STATE_ACTIVE;
     if (w->time_end != 0) workout_state = STATE_FINISHED;
+
+    SaveState state = slots_load_state();
+    uint8_t slots_taken = (uint8_t) ((state.save1_in_use ? 1 : 0) + (state.save2_in_use ? 1 : 0) + (state.save3_in_use ? 1 : 0));
+    upload_status_str[0] = (char) ('0' + slots_taken);
 
     menu_layer_reload_data(menu_layer);
 

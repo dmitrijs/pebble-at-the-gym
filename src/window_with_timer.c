@@ -253,7 +253,7 @@ static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
         } else {
             if (workout->time_end == 0) {
                 workout->time_end = (long) time(NULL);
-                workout_save_current(workout);
+                workout_save_current(workout, /*deep*/false);
             }
         }
         update_machine_layers();
@@ -323,7 +323,7 @@ void show_window_with_timer(bool new_workout, int location) {
         workout->location = location;
         workout->time_start = time(NULL);
 
-        workout_save_current(workout);
+        workout_save_current(workout, /*deep*/false);
     }
 
     APP_LOG(APP_LOG_LEVEL_DEBUG, "Workout time: %ld - %ld, location: %d", workout->time_start, workout->time_end, workout->location);
