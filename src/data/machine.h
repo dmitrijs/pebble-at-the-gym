@@ -93,3 +93,9 @@ void machine_save_current(Machine *);
 SaveState slots_load_state();
 
 bool workout_end_current();
+
+void workout_load_by_data_position(Workout *workout, uint32_t data_position);
+
+void machine_serialize(char *out, Machine *machine);
+
+void workout_serialize(char *out, Workout *workout);

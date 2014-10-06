@@ -9,10 +9,18 @@ Machine *machines_create_all();
 
 void machines_destroy(Machine *first_machine);
 
-void machine_save_to_key(Machine *m, uint32_t data_key) {
+void machine_serialize(char *res, Machine *m) {
     snprintf(res, 200, "id=%d ww=%d wn=%d ", m->mkey, m->warmup_kg, m->normal_kg);
     snprintf(tmp, 200, "s1=%d s2=%d s3=%d di=%d dt=%ld;", m->set_1, m->set_2, m->set_3, (m->is_done ? 1 : 0), m->time_done);
     strcat(res, tmp);
+}
+
+void workout_serialize(char *res, Workout *w) {
+    snprintf(res, 200, "wl=%d ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
+}
+
+void machine_save_to_key(Machine *m, uint32_t data_key) {
+    machine_serialize(res, m);
 
     persist_write_string((data_key + 1 + m->mkey), res);
     APP_LOG(APP_LOG_LEVEL_WARNING, "machine: %s", res);
@@ -25,7 +33,7 @@ void machine_save_current(Machine *m) {
 void workout_save_to_key(Workout *w, bool deep, uint32_t data_key) {
     APP_LOG(APP_LOG_LEVEL_WARNING, "saving workout to slot: %d, deep: %d", (int) data_key, (deep ? 1 : 0));
 
-    snprintf(res, 200, "wl=%d ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
+    workout_serialize(res, w);
     APP_LOG(APP_LOG_LEVEL_WARNING, "workout: %s", res);
     persist_write_string(data_key, res);
 
@@ -129,13 +137,17 @@ void read_machine_data_callback(void *ctx, char *key, char *value) {
     }
 }
 
-void workout_load_current_without_machines(Workout *workout) {
-    persist_read_string(DATA_WORKOUT_CURRENT, res, 200);
+void workout_load_by_data_position_without_machines(Workout *workout, uint32_t data_position) {
+    persist_read_string(data_position, res, 200);
 
     read_key_values_unsafe(workout, res, read_workout_data_callback);
 }
 
-void workout_load_current(Workout *workout) {
+void workout_load_current_without_machines(Workout *workout) {
+    workout_load_by_data_position_without_machines(workout, DATA_WORKOUT_CURRENT);
+}
+
+void workout_load_by_data_position(Workout *workout, uint32_t data_position) {
     workout_load_current_without_machines(workout);
 
     Machine *machine = workout->first_machine;
@@ -143,11 +155,15 @@ void workout_load_current(Workout *workout) {
     for (int mi = 0; mi < M__COUNT; mi++) {
         if (machine == NULL) break;
 
-        persist_read_string(DATA_WORKOUT_CURRENT + 1 + mi, res, 200);
+        persist_read_string(data_position + 1 + mi, res, 200);
         read_key_values_unsafe(machine, res, read_machine_data_callback);
 
         machine = machine->next;
     }
+}
+
+void workout_load_current(Workout *workout) {
+    workout_load_by_data_position(workout, DATA_WORKOUT_CURRENT);
 }
 
 void machines_destroy(Machine *first_machine) {
