@@ -99,3 +99,5 @@ void workout_load_by_data_position(Workout *workout, uint32_t data_position);
 void machine_serialize(char *out, Machine *machine);
 
 void workout_serialize(char *out, Workout *workout);
+
+void workout_delete_by_slot(uint16_t slot_number);

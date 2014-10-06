@@ -51,8 +51,14 @@ static HandlerQueue *handler_queue = NULL;
 static bool sending = false;
 
 static ReadyEventHandler _on_ready;
+static bool _is_ready;
 
 void mqueue_init(ReadyEventHandler on_ready) {
+    if (_is_ready) {
+        on_ready();
+        return;
+    }
+    _is_ready = false;
     _on_ready = on_ready;
     app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
     app_message_register_inbox_dropped(inbox_dropped_callback);
@@ -167,6 +173,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         }
     } else {
         _on_ready();
+        _is_ready = true;
     }
 }
 

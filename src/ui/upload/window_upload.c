@@ -13,7 +13,7 @@ typedef struct {
     int16_t maximum;
 } ProgressData;
 
-static bool upload_state[3][12];
+static bool upload_state[3][M__COUNT + 1];
 
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
 static Window *s_window;
@@ -106,6 +106,7 @@ static void handle_window_unload(Window *window) {
 static char buf[201];
 static char group_str[2] = "?";
 static char operation_str[3] = "m?";
+static bool upload_in_progress[3];
 
 void slot_data_received(int index, Layer *bar, char *operation, char *data) {
     APP_LOG(APP_LOG_LEVEL_ERROR, "slot %d data received", index);
@@ -116,12 +117,21 @@ void slot_data_received(int index, Layer *bar, char *operation, char *data) {
         upload_state[index][(operation[1] - 'A' + 1)] = true;
     }
     uint16_t progress = 0;
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < M__COUNT + 1; i++) {
         progress += (upload_state[index][i] ? 1 : 0);
     }
     ProgressData *bar_data = (ProgressData *) layer_get_data(bar);
     bar_data->progress = progress;
     layer_mark_dirty(bar);
+
+    if (bar_data->progress == bar_data->maximum) {
+        workout_delete_by_slot((uint16_t) (index + 1));
+        upload_in_progress[index] = false;
+
+        if (!upload_in_progress[0] && !upload_in_progress[1] && !upload_in_progress[2]) {
+            hide_window_upload();
+        }
+    }
 }
 
 void slot_0_data_received(char *operation, char *data) {
@@ -163,29 +173,27 @@ void start_upload_by_data_position(uint32_t index, uint32_t data_position) {
 
 void start_upload() {
     for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 12; ++j) {
+        upload_in_progress[i] = true;
+        for (int j = 0; j < M__COUNT + 1; ++j) {
             upload_state[i][j] = false;
         }
     }
 
     SaveState state = slots_load_state();
+    if (state.save1_in_use) {
+        start_upload_by_data_position(0, DATA_WORKOUT_SAVE_1);
+    } else {
+        upload_in_progress[0] = false;
+    }
     if (state.save2_in_use) {
         start_upload_by_data_position(1, DATA_WORKOUT_SAVE_2);
     } else {
-        layer_remove_from_parent(text_layer_get_layer(s_textlayer_3));
-        layer_remove_from_parent(progress_bar_layer_2);
+        upload_in_progress[1] = false;
     }
     if (state.save3_in_use) {
         start_upload_by_data_position(2, DATA_WORKOUT_SAVE_3);
     } else {
-        layer_remove_from_parent(text_layer_get_layer(s_textlayer_4));
-        layer_remove_from_parent(progress_bar_layer_3);
-    }
-    if (state.save1_in_use) {
-        start_upload_by_data_position(0, DATA_WORKOUT_SAVE_1);
-    } else {
-        layer_remove_from_parent(text_layer_get_layer(s_textlayer_2));
-        layer_remove_from_parent(progress_bar_layer_1);
+        upload_in_progress[2] = false;
     }
 }
 
@@ -193,14 +201,32 @@ void on_communication_ready() {
     start_upload();
 }
 
+void initialize_progress_bars() {
+    progress_bar_layer_1 = progress_bar_layer_create(GRect(6, 64, 130, 10), (ProgressData) {.progress = 0, .maximum = M__COUNT + 1});
+    progress_bar_layer_2 = progress_bar_layer_create(GRect(6, 97, 130, 10), (ProgressData) {.progress = 0, .maximum = M__COUNT + 1});
+    progress_bar_layer_3 = progress_bar_layer_create(GRect(6, 132, 130, 10), (ProgressData) {.progress = 0, .maximum = M__COUNT + 1});
+
+    SaveState state = slots_load_state();
+    if (state.save1_in_use) {
+        layer_add_child(window_get_root_layer(s_window), progress_bar_layer_1);
+    } else {
+        layer_remove_from_parent(text_layer_get_layer(s_textlayer_2));
+    }
+    if (state.save2_in_use) {
+        layer_add_child(window_get_root_layer(s_window), progress_bar_layer_2);
+    } else {
+        layer_remove_from_parent(text_layer_get_layer(s_textlayer_3));
+    }
+    if (state.save3_in_use) {
+        layer_add_child(window_get_root_layer(s_window), progress_bar_layer_3);
+    } else {
+        layer_remove_from_parent(text_layer_get_layer(s_textlayer_4));
+    }
+}
+
 void show_window_upload(void) {
     initialise_ui();
-    progress_bar_layer_1 = progress_bar_layer_create(GRect(6, 64, 130, 10), (ProgressData) {.progress = 0, .maximum = 12});
-    progress_bar_layer_2 = progress_bar_layer_create(GRect(6, 97, 130, 10), (ProgressData) {.progress = 0, .maximum = 12});
-    progress_bar_layer_3 = progress_bar_layer_create(GRect(6, 132, 130, 10), (ProgressData) {.progress = 0, .maximum = 12});
-    layer_add_child(window_get_root_layer(s_window), progress_bar_layer_1);
-    layer_add_child(window_get_root_layer(s_window), progress_bar_layer_2);
-    layer_add_child(window_get_root_layer(s_window), progress_bar_layer_3);
+    initialize_progress_bars();
 
     window_set_window_handlers(s_window, (WindowHandlers) {
             .unload = handle_window_unload,

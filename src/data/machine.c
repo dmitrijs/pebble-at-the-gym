@@ -373,3 +373,33 @@ bool workout_end_current() {
 
     return true;
 }
+
+void workout_delete_by_slot(uint16_t slot_number) {
+    SaveState state = slots_load_state();
+
+    uint32_t data_position;
+    switch (slot_number) {
+        case 1:
+            data_position = DATA_WORKOUT_SAVE_1;
+            state.save1_in_use = false;
+            break;
+        case 2:
+            data_position = DATA_WORKOUT_SAVE_2;
+            state.save2_in_use = false;
+            break;
+        case 3:
+            data_position = DATA_WORKOUT_SAVE_3;
+            state.save3_in_use = false;
+            break;
+        default:
+            return;
+    }
+
+    persist_delete(data_position);
+
+    for (int i = 0; i < M__COUNT; i++) {
+        persist_delete(data_position + 1 + i);
+    }
+
+    slots_save_state(state);
+}
