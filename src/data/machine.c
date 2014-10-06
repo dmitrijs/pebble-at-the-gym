@@ -148,7 +148,7 @@ void workout_load_current_without_machines(Workout *workout) {
 }
 
 void workout_load_by_data_position(Workout *workout, uint32_t data_position) {
-    workout_load_current_without_machines(workout);
+    workout_load_by_data_position_without_machines(workout, data_position);
 
     Machine *machine = workout->first_machine;
 
