@@ -50,16 +50,7 @@ static MessageQueue *msg_queue = NULL;
 static HandlerQueue *handler_queue = NULL;
 static bool sending = false;
 
-static ReadyEventHandler _on_ready;
-static bool _is_ready;
-
-void mqueue_init(ReadyEventHandler on_ready) {
-    if (_is_ready) {
-        on_ready();
-        return;
-    }
-    _is_ready = false;
-    _on_ready = on_ready;
+void mqueue_init() {
     app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
     app_message_register_inbox_dropped(inbox_dropped_callback);
     app_message_register_outbox_sent(outbox_sent_callback);
@@ -80,7 +71,7 @@ bool mqueue_add(char *group, char *operation, char *data) {
     mq->message->data = malloc(strlen(data));
     strcpy(mq->message->data, data);
 
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "%s, %s, %s", mq->message->group, mq->message->operation, mq->message->data);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "added: %s, %s, %s", mq->message->group, mq->message->operation, mq->message->data);
 
     if (msg_queue == NULL) {
         msg_queue = mq;
@@ -155,8 +146,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     Tuple *operation_tuple = dict_find(iterator, KEY_OPERATION);
     Tuple *data_tuple = dict_find(iterator, KEY_DATA);
 
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "in pointers: %p %p %p", group_tuple, operation_tuple, data_tuple);
-
     if (group_tuple && operation_tuple && data_tuple) {
         char *group = group_tuple->value->cstring;
         char *operation = operation_tuple->value->cstring;
@@ -172,8 +161,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
             hq = hq->next;
         }
     } else {
-        _on_ready();
-        _is_ready = true;
+        // ready
     }
 }
 

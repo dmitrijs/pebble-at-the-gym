@@ -9,9 +9,7 @@
 
 typedef void (*MessageHandler)(char *operation, char *data);
 
-typedef void (*ReadyEventHandler)();
-
-void mqueue_init(ReadyEventHandler);
+void mqueue_init();
 
 bool mqueue_add(char *group, char *operation, char *params);
 

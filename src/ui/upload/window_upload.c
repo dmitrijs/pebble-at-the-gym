@@ -109,7 +109,8 @@ static char operation_str[3] = "m?";
 static bool upload_in_progress[3];
 
 void slot_data_received(int index, Layer *bar, char *operation, char *data) {
-    APP_LOG(APP_LOG_LEVEL_ERROR, "slot %d data received", index);
+    // APP_LOG(APP_LOG_LEVEL_ERROR, "slot %d data received", index);
+
     if (operation[0] == 'w') {
         upload_state[index][0] = true;
     }
@@ -125,7 +126,8 @@ void slot_data_received(int index, Layer *bar, char *operation, char *data) {
     layer_mark_dirty(bar);
 
     if (bar_data->progress == bar_data->maximum) {
-        workout_delete_by_slot((uint16_t) (index + 1));
+        // TODO: enable
+        // workout_delete_by_slot((uint16_t) (index + 1));
         upload_in_progress[index] = false;
 
         if (!upload_in_progress[0] && !upload_in_progress[1] && !upload_in_progress[2]) {
@@ -197,10 +199,6 @@ void start_upload() {
     }
 }
 
-void on_communication_ready() {
-    start_upload();
-}
-
 void initialize_progress_bars() {
     progress_bar_layer_1 = progress_bar_layer_create(GRect(6, 64, 130, 10), (ProgressData) {.progress = 0, .maximum = M__COUNT + 1});
     progress_bar_layer_2 = progress_bar_layer_create(GRect(6, 97, 130, 10), (ProgressData) {.progress = 0, .maximum = M__COUNT + 1});
@@ -233,10 +231,11 @@ void show_window_upload(void) {
     });
     window_stack_push(s_window, true);
 
-    mqueue_init(on_communication_ready);
     mqueue_register_handler("0", slot_0_data_received);
     mqueue_register_handler("1", slot_1_data_received);
     mqueue_register_handler("2", slot_2_data_received);
+    mqueue_init();
+    start_upload();
 }
 
 void hide_window_upload(void) {
