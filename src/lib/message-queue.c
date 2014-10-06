@@ -153,12 +153,17 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
         APP_LOG(APP_LOG_LEVEL_DEBUG, "in: %s %s %s", group, operation, data);
 
+        bool was_handled = false;
         HandlerQueue *hq = handler_queue;
         while (hq != NULL) {
             if (strcmp(group, hq->group) == 0) {
+                was_handled = true;
                 hq->handler(operation, data);
             }
             hq = hq->next;
+        }
+        if (!was_handled) {
+            APP_LOG(APP_LOG_LEVEL_DEBUG, "group %s handler is not available", group);
         }
     } else {
         // ready

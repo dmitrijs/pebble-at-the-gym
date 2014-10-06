@@ -16,7 +16,7 @@ void machine_serialize(char *res, Machine *m) {
 }
 
 void workout_serialize(char *res, Workout *w) {
-    snprintf(res, 200, "wl=%d ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
+    snprintf(res, 200, "wl=%c ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
 }
 
 void machine_save_to_key(Machine *m, uint32_t data_key) {
@@ -59,7 +59,7 @@ void read_workout_data_callback(void *ctx, char *key, char *value) {
         case 'w': {
             switch (key[1]) {
                 case 'l':
-                    workout->location = atoi(value);
+                    workout->location = value[0];
                     break;
                 case 's':
                     workout->time_start = atol(value);
@@ -198,7 +198,7 @@ void machine_reset(Machine *m) {
 void workout_reset(Workout *w, bool deep) {
     w->time_start = 0;
     w->time_end = 0;
-    w->location = -1;
+    w->location = '?';
 
     if (deep) {
         Machine *m = w->first_machine;

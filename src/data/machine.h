@@ -69,7 +69,7 @@ struct Workout {
     long time_start;
     long time_end;
 
-    int location;
+    char location;
 
     Machine *first_machine;
 };

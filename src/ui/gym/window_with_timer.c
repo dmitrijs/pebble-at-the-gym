@@ -298,7 +298,7 @@ static void draw_rectangles(struct Layer *layer, GContext *ctx) {
     }
 }
 
-void show_window_with_timer(bool new_workout, int location) {
+void show_window_with_timer(bool new_workout, char location) {
     initialise_ui();
     window_set_window_handlers(s_window, (WindowHandlers) {
             .unload = handle_window_unload,
@@ -326,7 +326,7 @@ void show_window_with_timer(bool new_workout, int location) {
         workout_save_current(workout, /*deep*/false);
     }
 
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Workout time: %ld - %ld, location: %d", workout->time_start, workout->time_end, workout->location);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Workout time: %ld - %ld, location: %c", workout->time_start, workout->time_end, workout->location);
 
     current_machine = workout->first_machine;
 

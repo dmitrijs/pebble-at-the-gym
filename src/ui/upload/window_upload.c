@@ -127,7 +127,7 @@ void slot_data_received(int index, Layer *bar, char *operation, char *data) {
 
     if (bar_data->progress == bar_data->maximum) {
         // TODO: enable
-        // workout_delete_by_slot((uint16_t) (index + 1));
+        workout_delete_by_slot((uint16_t) (index + 1));
         upload_in_progress[index] = false;
 
         if (!upload_in_progress[0] && !upload_in_progress[1] && !upload_in_progress[2]) {
