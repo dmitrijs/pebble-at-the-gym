@@ -8,7 +8,6 @@ static BitmapLayer *s_prepare;
 
 static void initialise_ui(void) {
     s_window = window_create();
-    window_set_fullscreen(s_window, false);
 
     s_res_prepare_bg = gbitmap_create_with_resource(RESOURCE_ID_PREPARE_BG);
     // s_prepare

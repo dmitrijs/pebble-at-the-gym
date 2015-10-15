@@ -27,14 +27,13 @@ static TextLayer *s_rest_title;
 static TextLayer *s_warmup_kg;
 static TextLayer *s_labels_kg;
 static TextLayer *s_machine;
-static InverterLayer *s_inv_timer;
+//static InverterLayer *s_inv_timer;
 static TextLayer *s_normal_kg;
-static InverterLayer *s_inv_selector;
+//static InverterLayer *s_inv_selector;
 static Layer *s_layer_1;
 
 static void initialise_ui(void) {
     s_window = window_create();
-    window_set_fullscreen(s_window, false);
 
     s_res_bitham_30_black = fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK);
     s_res_gothic_28_bold = fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD);
@@ -101,8 +100,8 @@ static void initialise_ui(void) {
     layer_add_child(window_get_root_layer(s_window), (Layer *) s_machine);
 
     // s_inv_timer
-    s_inv_timer = inverter_layer_create(GRect(0, 124, 144, 28));
-    layer_add_child(window_get_root_layer(s_window), (Layer *) s_inv_timer);
+//    s_inv_timer = inverter_layer_create(GRect(0, 124, 144, 28));
+//    layer_add_child(window_get_root_layer(s_window), (Layer *) s_inv_timer);
 
     // s_normal_kg
     s_normal_kg = text_layer_create(GRect(70, 54, 54, 31));
@@ -113,8 +112,8 @@ static void initialise_ui(void) {
     layer_add_child(window_get_root_layer(s_window), (Layer *) s_normal_kg);
 
     // s_inv_selector
-    s_inv_selector = inverter_layer_create(GRect(8, 88, 43, 35));
-    layer_add_child(window_get_root_layer(s_window), (Layer *) s_inv_selector);
+//    s_inv_selector = inverter_layer_create(GRect(8, 88, 43, 35));
+//    layer_add_child(window_get_root_layer(s_window), (Layer *) s_inv_selector);
 
     // s_layer_1
     s_layer_1 = layer_create(GRect(7, 1, 134, 15));
@@ -131,9 +130,9 @@ static void destroy_ui(void) {
     text_layer_destroy(s_warmup_kg);
     text_layer_destroy(s_labels_kg);
     text_layer_destroy(s_machine);
-    inverter_layer_destroy(s_inv_timer);
+//    inverter_layer_destroy(s_inv_timer);
     text_layer_destroy(s_normal_kg);
-    inverter_layer_destroy(s_inv_selector);
+//    inverter_layer_destroy(s_inv_selector);
     layer_destroy(s_layer_1);
 }
 // END AUTO-GENERATED UI CODE
@@ -163,8 +162,8 @@ static void update_machine_layers() {
 }
 
 static void update_inv_layer() {
-    GRect rect = layer_get_frame(editable_fields[current_field]);
-    layer_set_frame((Layer *) s_inv_selector, rect);
+//    GRect rect = layer_get_frame(editable_fields[current_field]);
+//    layer_set_frame((Layer *) s_inv_selector, rect);
 }
 
 static void decrease_click_handler(ClickRecognizerRef recognizer, void *context) {
