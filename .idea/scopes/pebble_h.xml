@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="pebble.h" pattern="file[at_the_gym]:src/pebble.h//*" />
+</component>

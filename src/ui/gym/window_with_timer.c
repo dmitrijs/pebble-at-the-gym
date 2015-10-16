@@ -3,7 +3,7 @@
 #include "window_with_timer.h"
 #include "../../data/machine.h"
 
-Layer *editable_fields[F__COUNT];
+TextLayer *editable_fields[F__COUNT];
 size_t current_field;
 
 //Machine *first_machine = NULL;
@@ -29,7 +29,6 @@ static TextLayer *s_labels_kg;
 static TextLayer *s_machine;
 //static InverterLayer *s_inv_timer;
 static TextLayer *s_normal_kg;
-//static InverterLayer *s_inv_selector;
 static Layer *s_layer_1;
 
 static void initialise_ui(void) {
@@ -111,10 +110,6 @@ static void initialise_ui(void) {
     text_layer_set_font(s_normal_kg, s_res_bitham_30_black);
     layer_add_child(window_get_root_layer(s_window), (Layer *) s_normal_kg);
 
-    // s_inv_selector
-//    s_inv_selector = inverter_layer_create(GRect(8, 88, 43, 35));
-//    layer_add_child(window_get_root_layer(s_window), (Layer *) s_inv_selector);
-
     // s_layer_1
     s_layer_1 = layer_create(GRect(7, 1, 134, 15));
     layer_add_child(window_get_root_layer(s_window), s_layer_1);
@@ -132,7 +127,6 @@ static void destroy_ui(void) {
     text_layer_destroy(s_machine);
 //    inverter_layer_destroy(s_inv_timer);
     text_layer_destroy(s_normal_kg);
-//    inverter_layer_destroy(s_inv_selector);
     layer_destroy(s_layer_1);
 }
 // END AUTO-GENERATED UI CODE
@@ -161,9 +155,14 @@ static void update_machine_layers() {
     layer_mark_dirty(s_layer_1);
 }
 
+static void clear_inv_layer() {
+    text_layer_set_background_color(editable_fields[current_field], GColorClear);
+    text_layer_set_text_color(editable_fields[current_field], GColorBlack);
+}
+
 static void update_inv_layer() {
-//    GRect rect = layer_get_frame(editable_fields[current_field]);
-//    layer_set_frame((Layer *) s_inv_selector, rect);
+    text_layer_set_background_color(editable_fields[current_field], GColorDarkGreen);
+    text_layer_set_text_color(editable_fields[current_field], GColorWhite);
 }
 
 static void decrease_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -230,6 +229,7 @@ static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
         return;
     }
     if (current_field > 0) {
+        clear_inv_layer();
         current_field--;
         update_inv_layer();
     }
@@ -244,6 +244,7 @@ static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
     }
     machine_save_current(current_machine);
 
+    clear_inv_layer();
     current_field++;
     if (current_field == F__COUNT) {
         current_field = 0;
@@ -306,12 +307,12 @@ void show_window_with_timer(bool new_workout, char location) {
     window_set_click_config_provider(s_window, click_config_provider);
     layer_set_update_proc(s_layer_1, draw_rectangles);
 
-    editable_fields[F_TITLE] = (Layer *) s_machine;
-    editable_fields[F_WARMUP_KG] = (Layer *) s_warmup_kg;
-    editable_fields[F_NORMAL_KG] = (Layer *) s_normal_kg;
-    editable_fields[F_SET_1] = (Layer *) s_set_1;
-    editable_fields[F_SET_2] = (Layer *) s_set_2;
-    editable_fields[F_SET_3] = (Layer *) s_set_3;
+    editable_fields[F_TITLE] = s_machine;
+    editable_fields[F_WARMUP_KG] = s_warmup_kg;
+    editable_fields[F_NORMAL_KG] = s_normal_kg;
+    editable_fields[F_SET_1] = s_set_1;
+    editable_fields[F_SET_2] = s_set_2;
+    editable_fields[F_SET_3] = s_set_3;
 
     current_field = F_TITLE;
 
