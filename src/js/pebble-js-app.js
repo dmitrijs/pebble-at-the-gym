@@ -115,7 +115,7 @@ function saveWorkout(whole_group, group, operation) {
 
     var response;
     var req = new XMLHttpRequest();
-    req.open('GET', "http://pebble.wbjnh.com/at_the_gym/?pebble=1&action=save_workout&data=" + escape(whole_data), false);
+    req.open('GET', "http://pebble.zxc.lv/at_the_gym/?pebble=1&action=save_workout&data=" + escape(whole_data), false);
     req.onload = function (e) {
         console.log("e: " + req.readyState + " " + req.status + " group: " + group + " op: " + operation);
 
