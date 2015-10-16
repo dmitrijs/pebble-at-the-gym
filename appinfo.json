@@ -1,22 +1,35 @@
 {
-    "appKeys": {},
-    "capabilities": [
-        ""
-    ],
-    "companyName": "dmitrijs.sadovskis@gmail.com",
-    "longName": "At The Gym",
-    "projectType": "native",
-    "resources": {
-        "media": []
-    },
-    "sdkVersion": "3",
-    "shortName": "At The Gym",
-    "targetPlatforms": [
-        "basalt"
-    ],
-    "uuid": "37185471-6468-48b8-94b0-bcc9dcd8f64d",
-    "versionLabel": "1.0",
-    "watchapp": {
-        "watchface": false
-    }
+  "uuid": "98cb1554-b00a-4a00-b17b-a172c91f578a",
+  "shortName": "at_the_gym",
+  "longName": "at_the_gym",
+  "companyName": "MakeAwesomeHappen",
+  "versionCode": 1,
+  "versionLabel": "1.0",
+  "watchapp": {
+    "watchface": false
+  },
+  "appKeys": {
+    "group": 0,
+    "operation": 1,
+    "data": 2
+  },
+  "resources": {
+    "media": [
+      {
+        "type": "png",
+        "name": "IMAGE_ICON",
+        "file": "icon.png",
+        "menuIcon": true
+      },
+      {
+        "type": "png",
+        "name": "PREPARE_BG",
+        "file": "prepare_bg.png"
+      }
+    ]
+  },
+  "targetPlatforms": [
+    "basalt"
+  ],
+  "sdkVersion": "3"
 }
