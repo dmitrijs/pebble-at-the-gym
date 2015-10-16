@@ -2,10 +2,10 @@
 #include "window_with_timer.h"
 #include "window_location.h"
 #include "window_menu.h"
-#include "../prepare/window_prepare.h"
-#include "../upload/window_upload.h"
-#include "../window_error.h"
-#include "../../data/machine.h"
+#include "../ui_prepare/window_prepare.h"
+#include "../ui_upload/window_upload.h"
+#include "../ui/window_error.h"
+#include "../data/machine.h"
 
 static Window *window;
 static MenuLayer *menu_layer;

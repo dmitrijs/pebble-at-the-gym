@@ -15,11 +15,11 @@ set(SOURCE_FILES appinfo.json
     src/lib/key_value_unsafe.c src/lib/key_value_unsafe.h
     src/lib/message-queue.c src/lib/message-queue.h
 
-    src/ui/gym/window_with_timer.c src/ui/gym/window_with_timer.h
-    src/ui/gym/window_location.c src/ui/gym/window_location.h
-    src/ui/gym/window_menu.c src/ui/gym/window_menu.h
-    src/ui/prepare/window_prepare.c src/ui/prepare/window_prepare.h
-    src/ui/upload/window_upload.c src/ui/upload/window_upload.h
+        src/ui_gym/window_with_timer.c src/ui_gym/window_with_timer.h
+        src/ui_gym/window_location.c src/ui_gym/window_location.h
+        src/ui_gym/window_menu.c src/ui_gym/window_menu.h
+        src/ui_prepare/window_prepare.c src/ui_prepare/window_prepare.h
+        src/ui_upload/window_upload.c src/ui_upload/window_upload.h
     src/ui/window_error.c src/ui/window_error.h
 )
 add_executable(at_the_gym ${SOURCE_FILES})

@@ -1,5 +1,5 @@
 #include <pebble.h>
-#include "ui/gym/window_menu.h"
+#include "ui_gym/window_menu.h"
 
 int main(void) {
 //    show_window_with_timer();

@@ -1,6 +1,6 @@
 #include "window_upload.h"
-#include "../../data/machine.h"
-#include "../../lib/message-queue.h"
+#include "../data/machine.h"
+#include "../lib/message-queue.h"
 
 typedef Layer ProgressBarLayer;
 
