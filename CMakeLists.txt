@@ -9,6 +9,8 @@ set(SOURCE_FILES appinfo.json
 
     src/main.c
 
+    build/basalt/src/resource_ids.auto.h
+
     src/data/machine.c src/data/machine.h
 
     src/lib/parsed.c src/lib/parsed.h

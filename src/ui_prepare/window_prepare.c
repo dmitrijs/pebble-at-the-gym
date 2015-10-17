@@ -1,4 +1,7 @@
 #include "window_prepare.h"
+#ifdef __MINGW32__
+#include "../../build/basalt/src/resource_ids.auto.h"
+#endif
 #include <pebble.h>
 
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
