@@ -11,7 +11,8 @@
   "appKeys": {
     "group": 0,
     "operation": 1,
-    "data": 2
+    "data": 2,
+    "ready": 9
   },
   "resources": {
     "media": [
