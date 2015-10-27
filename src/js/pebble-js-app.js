@@ -1,4 +1,13 @@
-var MessageQueue = function () {
+"use strict";
+(function (root, factory) {
+    if (typeof define === "function" && define.amd) {
+        define([], factory)
+    } else if (typeof module === "object" && module.exports) {
+        module.exports = factory()
+    } else {
+        root.MessageQueue = factory()
+    }
+})(this, function () {
     var RETRY_MAX = 5;
     var queue = [];
     var sending = false;
@@ -50,7 +59,7 @@ var MessageQueue = function () {
                 case"number":
                     return true;
                 case"object":
-                    if (toString.call(value) == "[object Array]") {
+                    if (toString.call(value) === "[object Array]") {
                         return true
                     }
             }
@@ -108,7 +117,7 @@ var MessageQueue = function () {
             }
         }
     }
-}();
+});
 
 function saveWorkout(whole_group, group, operation) {
     var whole_data = whole_group.join('\n');
@@ -144,12 +153,16 @@ function saveWorkoutData(group, operation, data) {
     groups[group].push(operation + '=' + data);
 
     if (!isGroupComplete(groups[group])) {
+        console.log("group is not complete");
+
         MessageQueue.sendAppMessage({
             "group": group,
             "operation": operation,
             "data": 'need_more'
         });
     } else {
+        console.log("group is complete, saving");
+
         saveWorkout(groups[group], group, operation);
         groups[group] = [];
     }

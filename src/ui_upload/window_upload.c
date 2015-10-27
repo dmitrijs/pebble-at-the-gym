@@ -54,7 +54,7 @@ static void initialise_ui(void) {
 }
 
 static void destroy_ui(void) {
-    window_destroy(s_window);
+    //window_destroy(s_window);
     text_layer_destroy(s_textlayer_1);
     text_layer_destroy(s_textlayer_2);
     text_layer_destroy(s_textlayer_3);
@@ -99,7 +99,7 @@ static void handle_window_unload(Window *window) {
     progress_bar_destroy(progress_bar_layer_2);
     progress_bar_destroy(progress_bar_layer_3);
 
-    mqueue_destroy();
+    //mqueue_destroy();
 }
 
 static char buf[201];
@@ -108,7 +108,7 @@ static char operation_str[3] = "m?";
 static bool upload_in_progress[3];
 
 void slot_data_received(int index, Layer *bar, char *operation, char *data) {
-    // APP_LOG(APP_LOG_LEVEL_ERROR, "slot %d data received", index);
+    APP_LOG(APP_LOG_LEVEL_INFO, "slot %d data received", index);
 
     if (operation[0] == 'w') {
         upload_state[index][0] = true;
@@ -161,8 +161,13 @@ void start_upload_by_data_position(uint32_t index, uint32_t data_position) {
 
     Machine *m = w->first_machine;
     while (m != NULL) {
+        APP_LOG(APP_LOG_LEVEL_INFO, "serializing machine");
         machine_serialize(buf, m);
+        APP_LOG(APP_LOG_LEVEL_INFO, "serialized");
         operation_str[1] = (char) ('A' + m->mkey);
+        APP_LOG(APP_LOG_LEVEL_INFO, "NOT sending machine data");
+        operation_str[2] = 0;
+        buf[200] = 0;
         mqueue_add(group_str, operation_str, buf);
 
         m = m->next;
@@ -233,7 +238,8 @@ void show_window_upload(void) {
     mqueue_register_handler("0", slot_0_data_received);
     mqueue_register_handler("1", slot_1_data_received);
     mqueue_register_handler("2", slot_2_data_received);
-    mqueue_init();
+    mqueue_init(true);
+    mqueue_enable_sending();
     start_upload();
 }
 

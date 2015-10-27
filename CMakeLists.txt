@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8.4)
 project(at_the_gym)
 
+include_directories(build/basalt/src)
+
+set(HEADER_FILES build/basalt/src/resource_ids.auto.h)
+
 set(SOURCE_FILES appinfo.json
     resources/icon.png
     resources/prepare_bg.png
@@ -8,8 +12,6 @@ set(SOURCE_FILES appinfo.json
     src/js/pebble-js-app.js
 
     src/main.c
-
-    build/basalt/src/resource_ids.auto.h
 
     src/data/machine.c src/data/machine.h
 
