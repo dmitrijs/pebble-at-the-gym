@@ -2,8 +2,8 @@
 #include "machine.h"
 #include "../lib/key_value_unsafe.h"
 
-char res[201];
-char tmp[201];
+static char res[201];
+static char tmp[201];
 
 Machine *machines_create_all();
 
@@ -153,10 +153,19 @@ void workout_load_by_data_position(Workout *workout, uint32_t data_position) {
     Machine *machine = workout->first_machine;
 
     for (int mi = 0; mi < M__COUNT; mi++) {
-        if (machine == NULL) break;
+        if (machine == NULL) {
+            APP_LOG(APP_LOG_LEVEL_INFO, "workout_load_by_data_position: machine is null!");
+            break;
+        }
 
-        persist_read_string(data_position + 1 + mi, res, 200);
-        read_key_values_unsafe(machine, res, read_machine_data_callback);
+        if (persist_exists(data_position + 1 + mi)) { // todo: remove if
+            persist_read_string(data_position + 1 + mi, res, 200);
+            read_key_values_unsafe(machine, res, read_machine_data_callback);
+
+            APP_LOG(APP_LOG_LEVEL_INFO, "workout_load_by_data_position: data exists: %s", res);
+        } else {
+            APP_LOG(APP_LOG_LEVEL_INFO, "workout_load_by_data_position: key does not exist!");
+        }
 
         machine = machine->next;
     }
@@ -395,10 +404,16 @@ void workout_delete_by_slot(uint16_t slot_number) {
             return;
     }
 
-    persist_delete(data_position);
+    APP_LOG(APP_LOG_LEVEL_INFO, "persist_delete %lu", (unsigned long)data_position);
+    if (persist_exists(data_position)) {
+        persist_delete(data_position);
+    }
 
     for (int i = 0; i < M__COUNT; i++) {
-        persist_delete(data_position + 1 + i);
+        APP_LOG(APP_LOG_LEVEL_INFO, "persist_delete %lu", (unsigned long)data_position + 1 + i);
+        if (persist_exists(data_position + 1 + i)) {
+            persist_delete(data_position + 1 + i);
+        }
     }
 
     slots_save_state(state);

@@ -79,7 +79,7 @@ static bool can_send = false;
 static bool s_autostart = false;
 
 void mqueue_init(bool autostart) {
-    AppMessageResult result = app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+    AppMessageResult result = app_message_open(500, 3000);
     if (APP_MSG_OK != result) {
         APP_LOG(APP_LOG_LEVEL_ERROR, "INIT ERROR: %s", translate_error(result));
     }
@@ -160,11 +160,9 @@ void mqueue_enable_sending(void) {
 static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
     sending = false;
     MessageQueue *sent = msg_queue;
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "SENT_0: %s, %s, %s", sent->message->group, sent->message->operation, sent->message->data);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "SENT: %s, %s, %s", sent->message->group, sent->message->operation, sent->message->data);
     msg_queue = msg_queue->next;
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "SENT_1");
     destroy_message_queue(sent);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "SENT_2");
     send_next_message();
 }
 
@@ -176,6 +174,8 @@ static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResul
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "RECEIVED some data");
+
     Tuple *group_tuple = dict_find(iterator, KEY_GROUP);
     Tuple *operation_tuple = dict_find(iterator, KEY_OPERATION);
     Tuple *data_tuple = dict_find(iterator, KEY_DATA);
@@ -213,14 +213,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 }
 
 static void destroy_message_queue(MessageQueue *queue) {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "DSTR_1");
     free(queue->message->group);
     free(queue->message->operation);
     free(queue->message->data);
     free(queue->message);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "DSTR_2");
     free(queue);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "DSTR_3");
 }
 
 static void send_next_message() {

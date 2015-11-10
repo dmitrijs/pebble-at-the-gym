@@ -119,18 +119,19 @@
     }
 });
 
-function saveWorkout(whole_group, group, operation) {
-    var whole_data = whole_group.join('\n');
+function saveWorkoutData(group, operation, input) {
+    console.log("Received workout data. Saving.");
 
     var response;
     var req = new XMLHttpRequest();
-    req.open('GET', "http://pebble.zxc.lv/at_the_gym/?pebble=1&action=save_workout&data=" + escape(whole_data), false);
+    req.open('GET', "http://pebble.zxc.lv/at_the_gym/?pebble=1&action=save_workout&data=" + encodeURIComponent(input), false);
     req.onload = function (e) {
         console.log("e: " + req.readyState + " " + req.status + " group: " + group + " op: " + operation);
 
         if (req.readyState == 4) {
             if (req.status == 200) {
 
+                console.log("sending response to pebble");
                 MessageQueue.sendAppMessage({
                     "group": group,
                     "operation": operation,
@@ -142,38 +143,9 @@ function saveWorkout(whole_group, group, operation) {
     req.send(null);
 }
 
-var groups = {0: [], 1: [], 2: []};
-function isGroupComplete(grp) {
-    console.log("grp count: " + grp.length);
-    return grp.length == 12;
-}
-
-function saveWorkoutData(group, operation, data) {
-
-    groups[group].push(operation + '=' + data);
-
-    if (!isGroupComplete(groups[group])) {
-        console.log("group is not complete");
-
-        MessageQueue.sendAppMessage({
-            "group": group,
-            "operation": operation,
-            "data": 'need_more'
-        });
-    } else {
-        console.log("group is complete, saving");
-
-        saveWorkout(groups[group], group, operation);
-        groups[group] = [];
-    }
-}
-
 Pebble.addEventListener("ready", function (e) {
     console.log("JSApp is ready");
-
-    MessageQueue.sendAppMessage({
-        "ready": 1
-    });
+    // NOTE: do not send messages here, since connection will only get established when "Upload" window will be opened.
 });
 
 Pebble.addEventListener("appmessage", function (e) {

@@ -13,8 +13,6 @@ typedef struct {
     int16_t maximum;
 } ProgressData;
 
-static bool upload_state[3][M__COUNT + 1];
-
 // BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
 static Window *s_window;
 static GFont s_res_gothic_18_bold;
@@ -110,28 +108,17 @@ static bool upload_in_progress[3];
 void slot_data_received(int index, Layer *bar, char *operation, char *data) {
     APP_LOG(APP_LOG_LEVEL_INFO, "slot %d data received", index);
 
-    if (operation[0] == 'w') {
-        upload_state[index][0] = true;
-    }
-    if (operation[0] == 'm') {
-        upload_state[index][(operation[1] - 'A' + 1)] = true;
-    }
-    uint16_t progress = 0;
-    for (int i = 0; i < M__COUNT + 1; i++) {
-        progress += (upload_state[index][i] ? 1 : 0);
-    }
     ProgressData *bar_data = (ProgressData *) layer_get_data(bar);
-    bar_data->progress = progress;
+    bar_data->progress = bar_data->maximum;
     layer_mark_dirty(bar);
 
-    if (bar_data->progress == bar_data->maximum) {
-        // TODO: enable
-        workout_delete_by_slot((uint16_t) (index + 1));
-        upload_in_progress[index] = false;
+    APP_LOG(APP_LOG_LEVEL_INFO, "deleting slot %d data", index + 1);
+    workout_delete_by_slot((uint16_t) (index + 1));
 
-        if (!upload_in_progress[0] && !upload_in_progress[1] && !upload_in_progress[2]) {
-            hide_window_upload();
-        }
+    upload_in_progress[index] = false;
+
+    if (!upload_in_progress[0] && !upload_in_progress[1] && !upload_in_progress[2]) {
+        hide_window_upload();
     }
 }
 
@@ -155,8 +142,10 @@ void start_upload_by_data_position(uint32_t index, uint32_t data_position) {
 
     uint32_t i = 0;
 
-    workout_serialize(buf, w);
-    mqueue_add(group_str, "w", buf);
+    char bigbuf[1600];
+
+    workout_serialize(bigbuf, w);
+    APP_LOG(APP_LOG_LEVEL_INFO, "concat length: %d", strlen(bigbuf));
     i++;
 
     Machine *m = w->first_machine;
@@ -165,14 +154,19 @@ void start_upload_by_data_position(uint32_t index, uint32_t data_position) {
         machine_serialize(buf, m);
         APP_LOG(APP_LOG_LEVEL_INFO, "serialized");
         operation_str[1] = (char) ('A' + m->mkey);
-        APP_LOG(APP_LOG_LEVEL_INFO, "NOT sending machine data");
+        APP_LOG(APP_LOG_LEVEL_INFO, "sending machine data");
         operation_str[2] = 0;
         buf[200] = 0;
-        mqueue_add(group_str, operation_str, buf);
+
+        strcat(bigbuf, "\n");
+        strcat(bigbuf, buf);
+        APP_LOG(APP_LOG_LEVEL_INFO, "concat length: %d", strlen(bigbuf));
 
         m = m->next;
         i++;
     }
+
+    mqueue_add(group_str, "w", bigbuf);
 
     workout_destroy(w);
 }
@@ -180,9 +174,6 @@ void start_upload_by_data_position(uint32_t index, uint32_t data_position) {
 void start_upload() {
     for (int i = 0; i < 3; ++i) {
         upload_in_progress[i] = true;
-        for (int j = 0; j < M__COUNT + 1; ++j) {
-            upload_state[i][j] = false;
-        }
     }
 
     SaveState state = slots_load_state();
@@ -200,6 +191,34 @@ void start_upload() {
         start_upload_by_data_position(2, DATA_WORKOUT_SAVE_3);
     } else {
         upload_in_progress[2] = false;
+    }
+}
+
+void dump(uint32_t pos) {
+    char slots[30];
+
+    int i = 0;
+    for (;i <= 15; i++) {
+        if (persist_exists(pos + i)) {
+            slots[i] = 'X';
+        } else {
+            slots[i] = '-';
+        }
+    }
+    slots[i] = 0;
+
+    APP_LOG(APP_LOG_LEVEL_INFO, slots);
+
+    char buf[300];
+
+    i= 0;
+    for (;i <= 15; i++) {
+        buf[0] = 0;
+        if (persist_exists(pos + i)) {
+            APP_LOG(APP_LOG_LEVEL_INFO, "slot %d data:", i);
+            persist_read_string(pos + i, buf, 250);
+            APP_LOG(APP_LOG_LEVEL_INFO, buf);
+        }
     }
 }
 
@@ -224,6 +243,29 @@ void initialize_progress_bars() {
     } else {
         layer_remove_from_parent(text_layer_get_layer(s_textlayer_4));
     }
+
+    // print persistence state:
+    if (persist_exists(DATA_WORKOUT_CURRENT)) {
+        APP_LOG(APP_LOG_LEVEL_INFO, "current exists:");
+
+        dump(DATA_WORKOUT_CURRENT);
+    } else {
+        APP_LOG(APP_LOG_LEVEL_INFO, "no current");
+    }
+    if (persist_exists(DATA_WORKOUT_SAVE_1)) {
+        APP_LOG(APP_LOG_LEVEL_INFO, "save1 exists:");
+
+        dump(DATA_WORKOUT_SAVE_1);
+    } else {
+        APP_LOG(APP_LOG_LEVEL_INFO, "no save1");
+    }
+    if (persist_exists(DATA_WORKOUT_SAVE_2)) {
+        APP_LOG(APP_LOG_LEVEL_INFO, "save2 exists:");
+
+        dump(DATA_WORKOUT_SAVE_2);
+    } else {
+        APP_LOG(APP_LOG_LEVEL_INFO, "no save2");
+    }
 }
 
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -233,12 +275,12 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
     mqueue_register_handler("1", slot_1_data_received);
     mqueue_register_handler("2", slot_2_data_received);
     mqueue_init(true);
-    mqueue_enable_sending();
     start_upload();
+    mqueue_enable_sending();
 }
 
 static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
-    window_stack_remove(s_window, true);
+    hide_window_upload();
 }
 
 static void click_config_provider(void *context) {

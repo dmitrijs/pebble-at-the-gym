@@ -236,18 +236,17 @@ static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
-    if (current_field == F__COUNT - 1) {
-        current_machine->is_done = true;
-        if (current_machine->time_done == 0) {
-            current_machine->time_done = time(NULL);
-        }
-    }
-    machine_save_current(current_machine);
-
     clear_inv_layer();
     current_field++;
     if (current_field == F__COUNT) {
         current_field = 0;
+
+        current_machine->is_done = true;
+        if (current_machine->time_done == 0) {
+            current_machine->time_done = time(NULL);
+        }
+        machine_save_current(current_machine);
+
         if (current_machine->next != NULL) {
             current_machine = current_machine->next;
         } else {
