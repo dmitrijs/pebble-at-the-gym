@@ -29,7 +29,7 @@ static void initialise_ui(void) {
     s_res_gothic_18_bold = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
     // s_textlayer_1
     s_textlayer_1 = text_layer_create(GRect(2, 1, 141, 40));
-    text_layer_set_text(s_textlayer_1, "Uploading workouts,\nplease wait...");
+    text_layer_set_text(s_textlayer_1, "Press 'select' to start the upload.");
     text_layer_set_text_alignment(s_textlayer_1, GTextAlignmentCenter);
     text_layer_set_font(s_textlayer_1, s_res_gothic_18_bold);
     layer_add_child(window_get_root_layer(s_window), (Layer *) s_textlayer_1);
@@ -226,14 +226,8 @@ void initialize_progress_bars() {
     }
 }
 
-void show_window_upload(void) {
-    initialise_ui();
-    initialize_progress_bars();
-
-    window_set_window_handlers(s_window, (WindowHandlers) {
-            .unload = handle_window_unload,
-    });
-    window_stack_push(s_window, true);
+static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
+    text_layer_set_text(s_textlayer_1, "Uploading workouts,\nplease wait...");
 
     mqueue_register_handler("0", slot_0_data_received);
     mqueue_register_handler("1", slot_1_data_received);
@@ -241,6 +235,28 @@ void show_window_upload(void) {
     mqueue_init(true);
     mqueue_enable_sending();
     start_upload();
+}
+
+static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
+    window_stack_remove(s_window, true);
+}
+
+static void click_config_provider(void *context) {
+    window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
+    window_single_click_subscribe(BUTTON_ID_BACK, prev_click_handler);
+}
+
+
+void show_window_upload(void) {
+    initialise_ui();
+    initialize_progress_bars();
+
+    window_set_click_config_provider(s_window, click_config_provider);
+
+    window_set_window_handlers(s_window, (WindowHandlers) {
+            .unload = handle_window_unload,
+    });
+    window_stack_push(s_window, true);
 }
 
 void hide_window_upload(void) {
