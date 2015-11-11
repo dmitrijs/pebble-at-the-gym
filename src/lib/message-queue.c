@@ -91,19 +91,11 @@ void mqueue_init(bool autostart) {
 }
 
 bool mqueue_add(char *group, char *operation, char *data) {
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "adding_1: %s, %s, %s", group, operation, data);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "x10");
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "adding_2: msg size: %d", sizeof(MessageQueue));
-    MessageQueue *mq;
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "adding_3");
-    size_t c = sizeof(MessageQueue);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "adding_4");
-    mq = malloc(c);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "adding_5");
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "ADDING: %s, %s, %s", group, operation, data);
+
+    MessageQueue *mq = malloc(sizeof(MessageQueue));
     mq->next = NULL;
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "adding_6");
     mq->attempts_left = ATTEMPT_COUNT;
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "adding_7");
 
     mq->message = malloc(sizeof(Message));
     mq->message->group = malloc(strlen(group));
@@ -112,8 +104,6 @@ bool mqueue_add(char *group, char *operation, char *data) {
     strcpy(mq->message->operation, operation);
     mq->message->data = malloc(strlen(data));
     strcpy(mq->message->data, data);
-
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "ADDING: %s, %s, %s", mq->message->group, mq->message->operation, mq->message->data);
 
     if (msg_queue == NULL) {
         msg_queue = mq;
@@ -168,8 +158,7 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
 
 static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
     sending = false;
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "ERROR: %s, %s, %s", msg_queue->message->group, msg_queue->message->operation, msg_queue->message->data);
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "%s", translate_error(reason));
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "ERROR: %s", translate_error(reason));
     send_next_message();
 }
 
@@ -197,11 +186,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
             hq = hq->next;
         }
         if (!was_handled) {
-            APP_LOG(APP_LOG_LEVEL_DEBUG, "group %s handler is not available", group);
+            APP_LOG(APP_LOG_LEVEL_DEBUG, "Group %s handler is not available", group);
         }
     } else {
         // ready
-        APP_LOG(APP_LOG_LEVEL_DEBUG, "not all groups were received (?)");
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "REQUIRED TUPLES ARE MISSING (?)");
     }
 
     if (! can_send && s_autostart) {

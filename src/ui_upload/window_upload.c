@@ -134,7 +134,7 @@ void slot_2_data_received(char *operation, char *data) {
     slot_data_received(2, progress_bar_layer_3, operation, data);
 }
 
-void start_upload_by_data_position(uint32_t index, uint32_t data_position) {
+void prepare_upload_by_data_position(uint32_t index, uint32_t data_position) {
     group_str[0] = (char) ('0' + index);
 
     Workout *w = workout_create();
@@ -150,11 +150,8 @@ void start_upload_by_data_position(uint32_t index, uint32_t data_position) {
 
     Machine *m = w->first_machine;
     while (m != NULL) {
-        APP_LOG(APP_LOG_LEVEL_INFO, "serializing machine");
         machine_serialize(buf, m);
-        APP_LOG(APP_LOG_LEVEL_INFO, "serialized");
         operation_str[1] = (char) ('A' + m->mkey);
-        APP_LOG(APP_LOG_LEVEL_INFO, "sending machine data");
         operation_str[2] = 0;
         buf[200] = 0;
 
@@ -171,24 +168,24 @@ void start_upload_by_data_position(uint32_t index, uint32_t data_position) {
     workout_destroy(w);
 }
 
-void start_upload() {
+void prepare_upload() {
     for (int i = 0; i < 3; ++i) {
         upload_in_progress[i] = true;
     }
 
     SaveState state = slots_load_state();
     if (state.save1_in_use) {
-        start_upload_by_data_position(0, DATA_WORKOUT_SAVE_1);
+        prepare_upload_by_data_position(0, DATA_WORKOUT_SAVE_1);
     } else {
         upload_in_progress[0] = false;
     }
     if (state.save2_in_use) {
-        start_upload_by_data_position(1, DATA_WORKOUT_SAVE_2);
+        prepare_upload_by_data_position(1, DATA_WORKOUT_SAVE_2);
     } else {
         upload_in_progress[1] = false;
     }
     if (state.save3_in_use) {
-        start_upload_by_data_position(2, DATA_WORKOUT_SAVE_3);
+        prepare_upload_by_data_position(2, DATA_WORKOUT_SAVE_3);
     } else {
         upload_in_progress[2] = false;
     }
@@ -274,8 +271,8 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
     mqueue_register_handler("0", slot_0_data_received);
     mqueue_register_handler("1", slot_1_data_received);
     mqueue_register_handler("2", slot_2_data_received);
-    mqueue_init(true);
-    start_upload();
+    mqueue_init(false);
+    prepare_upload();
     mqueue_enable_sending();
 }
 
