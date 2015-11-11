@@ -6,14 +6,10 @@
 TextLayer *editable_fields[F__COUNT];
 size_t current_field;
 
-//Machine *first_machine = NULL;
 Machine *current_machine;
 
 Workout *workout;
 
-// InverterLayer *s_invert_all;
-
-// BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
 static Window *s_window;
 static GFont s_res_bitham_30_black;
 static GFont s_res_gothic_28_bold;
@@ -27,7 +23,6 @@ static TextLayer *s_rest_title;
 static TextLayer *s_warmup_kg;
 static TextLayer *s_labels_kg;
 static TextLayer *s_machine;
-//static InverterLayer *s_inv_timer;
 static TextLayer *s_normal_kg;
 static Layer *s_layer_1;
 
@@ -98,10 +93,6 @@ static void initialise_ui(void) {
     text_layer_set_font(s_machine, s_res_gothic_24_bold);
     layer_add_child(window_get_root_layer(s_window), (Layer *) s_machine);
 
-    // s_inv_timer
-//    s_inv_timer = inverter_layer_create(GRect(0, 124, 144, 28));
-//    layer_add_child(window_get_root_layer(s_window), (Layer *) s_inv_timer);
-
     // s_normal_kg
     s_normal_kg = text_layer_create(GRect(70, 54, 54, 31));
     text_layer_set_background_color(s_normal_kg, GColorClear);
@@ -125,7 +116,6 @@ static void destroy_ui(void) {
     text_layer_destroy(s_warmup_kg);
     text_layer_destroy(s_labels_kg);
     text_layer_destroy(s_machine);
-//    inverter_layer_destroy(s_inv_timer);
     text_layer_destroy(s_normal_kg);
     layer_destroy(s_layer_1);
 }
@@ -333,9 +323,6 @@ void show_window_with_timer(bool new_workout, char location) {
     update_inv_layer();
 
     window_stack_push(s_window, true);
-
-//    s_invert_all = inverter_layer_create(layer_get_bounds(window_get_root_layer(s_window)));
-//    layer_add_child(window_get_root_layer(s_window), (Layer *) s_invert_all);
 }
 
 void hide_window_with_timer(void) {
