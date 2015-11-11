@@ -56,6 +56,7 @@ struct Machine {
     Machine *next;
     Machine *prev;
 };
+// data size: 1char (key) 1 byte (warmup kg) 1 byte (normal kg) 3x1 byte (3 sets) 1 byte (done) 4bytes(time) = 11 bytes
 
 typedef struct SaveState SaveState;
 struct SaveState {
@@ -63,6 +64,7 @@ struct SaveState {
     bool save2_in_use;
     bool save3_in_use;
 };
+// TODO: replace with "persist_exists"
 
 typedef struct Workout Workout;
 struct Workout {
@@ -73,6 +75,7 @@ struct Workout {
 
     Machine *first_machine;
 };
+// data size: 1char(location)+4bytes(start)+4bytes(end)=11 bytes
 
 Workout *workout_create();
 
