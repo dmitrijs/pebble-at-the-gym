@@ -64,7 +64,7 @@ struct SaveState {
     bool save2_in_use;
     bool save3_in_use;
 };
-// TODO: replace with "persist_existsaref"
+// TODO: replace with "persist_exists"
 
 typedef struct Workout Workout;
 struct Workout {
@@ -77,30 +77,19 @@ struct Workout {
 };
 // data size: 1char(location)+4bytes(start)+4bytes(end)=11 bytes
 
-Workout *workout_create();
-
-Workout *workout_create_without_machines();
-
-void workout_load_current(Workout *);
-
-void workout_load_current_without_machines(Workout *workout);
-
-void workout_save_current(Workout *w, bool deep);
-
-void workout_cancel_current();
-
-void workout_destroy(Workout *);
-
-void machine_save_current(Machine *);
-
-SaveState slots_load_state();
-
-bool workout_end_current();
-
+void machine_serialize(char *res, Machine *m);
+void workout_serialize(char *res, Workout *w);
 void workout_load_by_data_position(Workout *workout, uint32_t data_position);
-
-void machine_serialize(char *out, Machine *machine);
-
-void workout_serialize(char *out, Workout *workout);
-
+void workout_load_current_without_machines(Workout *workout);
+void workout_save_current(Workout *w, bool deep);
+void machine_save_current(Machine *m);
+void workout_serialize(char *res, Workout *w);
+void machine_serialize(char *res, Machine *m);
+Workout *workout_create_without_machines();
+Workout *workout_create();
+void workout_cancel_current();
+void workout_destroy(Workout *w);
+void workout_load_current(Workout *workout);
 void workout_delete_by_slot(uint16_t slot_number);
+bool workout_end_current();
+SaveState slots_load_state();

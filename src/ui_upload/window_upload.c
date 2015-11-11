@@ -106,7 +106,7 @@ static char group_str[2] = "?";
 static char operation_str[3] = "m?";
 static bool upload_in_progress[3];
 
-void slot_data_received(int index, Layer *bar, char *operation, char *data) {
+static void slot_data_received(int index, Layer *bar, char *operation, char *data) {
     APP_LOG(APP_LOG_LEVEL_INFO, "slot %d data received", index);
 
     ProgressData *bar_data = (ProgressData *) layer_get_data(bar);
@@ -120,19 +120,19 @@ void slot_data_received(int index, Layer *bar, char *operation, char *data) {
     }
 }
 
-void slot_0_data_received(char *operation, char *data) {
+static void slot_0_data_received(char *operation, char *data) {
     slot_data_received(0, progress_bar_layer_1, operation, data);
 }
 
-void slot_1_data_received(char *operation, char *data) {
+static void slot_1_data_received(char *operation, char *data) {
     slot_data_received(1, progress_bar_layer_2, operation, data);
 }
 
-void slot_2_data_received(char *operation, char *data) {
+static void slot_2_data_received(char *operation, char *data) {
     slot_data_received(2, progress_bar_layer_3, operation, data);
 }
 
-void prepare_upload_by_data_position(uint32_t index, uint32_t data_position) {
+static void prepare_upload_by_data_position(uint32_t index, uint32_t data_position) {
     group_str[0] = (char) ('0' + index);
 
     Workout *w = workout_create();
@@ -166,7 +166,7 @@ void prepare_upload_by_data_position(uint32_t index, uint32_t data_position) {
     workout_destroy(w);
 }
 
-void prepare_upload() {
+static void prepare_upload() {
     for (int i = 0; i < 3; ++i) {
         upload_in_progress[i] = true;
     }
@@ -189,7 +189,7 @@ void prepare_upload() {
     }
 }
 
-void dump(uint32_t pos) {
+static void dump(uint32_t pos) {
     char slots[30];
 
     int i = 0;
@@ -217,7 +217,7 @@ void dump(uint32_t pos) {
     }
 }
 
-void initialize_progress_bars() {
+static void initialize_progress_bars() {
     progress_bar_layer_1 = progress_bar_layer_create(GRect(6, 64, 130, 10), (ProgressData) {.progress = 0, .maximum = M__COUNT + 1});
     progress_bar_layer_2 = progress_bar_layer_create(GRect(6, 97, 130, 10), (ProgressData) {.progress = 0, .maximum = M__COUNT + 1});
     progress_bar_layer_3 = progress_bar_layer_create(GRect(6, 132, 130, 10), (ProgressData) {.progress = 0, .maximum = M__COUNT + 1});

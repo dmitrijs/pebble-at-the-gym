@@ -11,56 +11,9 @@
 static Window *window;
 static MenuLayer *menu_layer;
 
-char *upload_status_str = "? workout(s) to upload";
+static char *upload_status_str = "? workout(s) to upload";
 // TODO: only delete workouts that were uploaded
-char *delete_status_str = "? workout(s) to delete";
-
-/*typedef enum {
-    MENUITEM_START,
-    MENUITEM_END,
-    MENUITEM_CANCEL,
-    MENUITEM_PREPARE,
-    MENUITEM_UPLOAD
-} MenuItemType;
-
-typedef struct {
-    char* title;
-    char* subtitle;
-    MenuItemType type;
-} MenuItemDefinition;
-
-typedef struct MenuItem MenuItem;
-struct MenuItem {
-    MenuItemDefinition* def;
-    MenuItem next;
-    bool is_last;
-};
-
-*//*typedef struct {
-    MenuItem* first_item;
-} Menu;*//*
-
-MenuItemDefinition start = (MenuItemDefinition) {
-        .title = "Start",
-        .type = MENUITEM_START,
-        .subtitle = NULL
-};
-MenuItemDefinition cancel = (MenuItemDefinition) {
-        .title = "Cancel",
-        .type = MENUITEM_CANCEL,
-        .subtitle = NULL
-};
-
-MenuItem not_active = (MenuItem) {
-        .def = &start,
-        .is_last = false,
-        .next = (MenuItem) {
-                .def = &cancel,
-                .is_last = true
-        }
-};
-
-MenuItem* gym_menu = &not_active;*/
+static char *delete_status_str = "? workout(s) to delete";
 
 typedef enum {
     STATE_NOT_ACTIVE,
@@ -68,9 +21,9 @@ typedef enum {
     STATE_FINISHED
 } WorkoutState;
 
-WorkoutState workout_state = STATE_NOT_ACTIVE;
+static WorkoutState workout_state = STATE_NOT_ACTIVE;
 
-void check_workout_state(Window *window);
+static void check_workout_state(Window *window);
 
 static uint16_t menu_get_num_sections_callback(MenuLayer *menu_layer, void *data) {
     return 2;
@@ -200,7 +153,7 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
 }
 
 // Here we capture when a user selects a menu item
-void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *data) {
+static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *data) {
     if (workout_state == STATE_NOT_ACTIVE && cell_index->section == 0 && cell_index->row == 0) { // Start
         show_window_location();
         return;
@@ -242,7 +195,7 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
     }
 }
 
-void check_workout_state(Window *window) {
+static void check_workout_state(Window *window) {
     Workout *w = workout_create_without_machines();
     workout_load_current_without_machines(w);
 
@@ -261,7 +214,7 @@ void check_workout_state(Window *window) {
 }
 
 // This initializes the menu upon window load
-void window_menu_load(Window *window) {
+static void window_menu_load(Window *window) {
     Layer *window_layer = window_get_root_layer(window);
 
     menu_layer = menu_layer_create(layer_get_frame(window_layer));
@@ -279,7 +232,7 @@ void window_menu_load(Window *window) {
     layer_add_child(window_layer, menu_layer_get_layer(menu_layer));
 }
 
-void window_menu_unload(Window *window) {
+static void window_menu_unload(Window *window) {
     menu_layer_destroy(menu_layer);
 }
 

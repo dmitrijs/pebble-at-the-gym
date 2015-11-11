@@ -5,9 +5,8 @@
 static char res[201];
 static char tmp[201];
 
-Machine *machines_create_all();
-
-void machines_destroy(Machine *first_machine);
+static Machine *_machines_create_all();
+static void _machines_destroy(Machine *first_machine);
 
 void machine_serialize(char *res, Machine *m) {
     snprintf(res, 200, "id=%d ww=%d wn=%d ", m->mkey, m->warmup_kg, m->normal_kg);
@@ -19,7 +18,7 @@ void workout_serialize(char *res, Workout *w) {
     snprintf(res, 200, "wl=%c ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
 }
 
-void machine_save_to_key(Machine *m, uint32_t data_key) {
+static void _machine_save_to_key(Machine *m, uint32_t data_key) {
     machine_serialize(res, m);
 
     persist_write_string((data_key + 1 + m->mkey), res);
@@ -27,10 +26,10 @@ void machine_save_to_key(Machine *m, uint32_t data_key) {
 }
 
 void machine_save_current(Machine *m) {
-    machine_save_to_key(m, DATA_WORKOUT_CURRENT);
+    _machine_save_to_key(m, DATA_WORKOUT_CURRENT);
 }
 
-void workout_save_to_key(Workout *w, bool deep, uint32_t data_key) {
+static void _workout_save_to_key(Workout *w, bool deep, uint32_t data_key) {
     APP_LOG(APP_LOG_LEVEL_WARNING, "saving workout to slot: %d, deep: %d", (int) data_key, (deep ? 1 : 0));
 
     workout_serialize(res, w);
@@ -40,20 +39,18 @@ void workout_save_to_key(Workout *w, bool deep, uint32_t data_key) {
     if (deep) {
         Machine *m = w->first_machine;
         while (m != NULL) {
-            machine_save_to_key(m, data_key);
+            _machine_save_to_key(m, data_key);
             m = m->next;
         }
     }
 }
 
 void workout_save_current(Workout *w, bool deep) {
-    workout_save_to_key(w, deep, DATA_WORKOUT_CURRENT);
+    _workout_save_to_key(w, deep, DATA_WORKOUT_CURRENT);
 }
 
-void read_workout_data_callback(void *ctx, char *key, char *value) {
+static void _read_workout_data_callback(void *ctx, char *key, char *value) {
     Workout *workout = (Workout *) ctx;
-
-//    APP_LOG(APP_LOG_LEVEL_DEBUG, "workout key -> val: %s -> %s", key, value);
 
     switch (key[0]) {
         case 'w': {
@@ -76,7 +73,7 @@ void read_workout_data_callback(void *ctx, char *key, char *value) {
     }
 }
 
-void read_machine_data_callback(void *ctx, char *key, char *value) {
+static void _read_machine_data_callback(void *ctx, char *key, char *value) {
     Machine *machine = (Machine *) ctx;
 
 //    APP_LOG(APP_LOG_LEVEL_DEBUG, "machine key -> val: %s -> %s", key, value);
@@ -137,18 +134,18 @@ void read_machine_data_callback(void *ctx, char *key, char *value) {
     }
 }
 
-void workout_load_by_data_position_without_machines(Workout *workout, uint32_t data_position) {
+static void _workout_load_by_data_position_without_machines(Workout *workout, uint32_t data_position) {
     persist_read_string(data_position, res, 200);
 
-    read_key_values_unsafe(workout, res, read_workout_data_callback);
+    read_key_values_unsafe(workout, res, _read_workout_data_callback);
 }
 
 void workout_load_current_without_machines(Workout *workout) {
-    workout_load_by_data_position_without_machines(workout, DATA_WORKOUT_CURRENT);
+    _workout_load_by_data_position_without_machines(workout, DATA_WORKOUT_CURRENT);
 }
 
 void workout_load_by_data_position(Workout *workout, uint32_t data_position) {
-    workout_load_by_data_position_without_machines(workout, data_position);
+    _workout_load_by_data_position_without_machines(workout, data_position);
 
     Machine *machine = workout->first_machine;
 
@@ -160,7 +157,7 @@ void workout_load_by_data_position(Workout *workout, uint32_t data_position) {
 
         if (persist_exists(data_position + 1 + mi)) { // todo: remove if
             persist_read_string(data_position + 1 + mi, res, 200);
-            read_key_values_unsafe(machine, res, read_machine_data_callback);
+            read_key_values_unsafe(machine, res, _read_machine_data_callback);
 
             APP_LOG(APP_LOG_LEVEL_INFO, "workout_load_by_data_position: data exists: %s", res);
         } else {
@@ -175,7 +172,7 @@ void workout_load_current(Workout *workout) {
     workout_load_by_data_position(workout, DATA_WORKOUT_CURRENT);
 }
 
-void machines_destroy(Machine *first_machine) {
+static void _machines_destroy(Machine *first_machine) {
     Machine *m = first_machine;
 
     while (m != NULL) {
@@ -194,17 +191,17 @@ void machines_destroy(Machine *first_machine) {
 
 void workout_destroy(Workout *w) {
     if (w->first_machine != NULL) {
-        machines_destroy(w->first_machine);
+        _machines_destroy(w->first_machine);
     }
     free(w);
 }
 
-void machine_reset(Machine *m) {
+static void _machine_reset(Machine *m) {
     m->is_done = false;
     m->time_done = 0;
 }
 
-void workout_reset(Workout *w, bool deep) {
+static void _workout_reset(Workout *w, bool deep) {
     w->time_start = 0;
     w->time_end = 0;
     w->location = '?';
@@ -212,7 +209,7 @@ void workout_reset(Workout *w, bool deep) {
     if (deep) {
         Machine *m = w->first_machine;
         while (m != NULL) {
-            machine_reset(m);
+            _machine_reset(m);
             m = m->next;
         }
     }
@@ -222,7 +219,7 @@ void workout_cancel_current() {
     Workout *w = workout_create();
     workout_load_current(w);
 
-    workout_reset(w, /*deep*/true);
+    _workout_reset(w, /*deep*/true);
     workout_save_current(w, /*deep*/true);
 
     workout_destroy(w);
@@ -230,18 +227,18 @@ void workout_cancel_current() {
 
 Workout *workout_create() {
     Workout *w = workout_create_without_machines();
-    w->first_machine = machines_create_all();
+    w->first_machine = _machines_create_all();
     return w;
 }
 
 Workout *workout_create_without_machines() {
     Workout *w = malloc(sizeof(Workout));
-    workout_reset(w, /*deep*/false);
+    _workout_reset(w, /*deep*/false);
     w->first_machine = NULL;
     return w;
 }
 
-Machine *machines_create_all() {
+static Machine *_machines_create_all() {
 
     Machine *first_machine = NULL;
     Machine *last_created_machine = NULL;
@@ -313,7 +310,7 @@ Machine *machines_create_all() {
     return first_machine;
 }
 
-void state_read_callback(void *ctx, char *key, char *value) {
+static void _state_read_callback(void *ctx, char *key, char *value) {
     SaveState *state = (SaveState *) ctx;
 
     switch (key[0]) {
@@ -339,12 +336,12 @@ SaveState slots_load_state() {
             .save2_in_use = false,
             .save3_in_use = false
     };
-    read_key_values_unsafe(&state, res, state_read_callback);
+    read_key_values_unsafe(&state, res, _state_read_callback);
 
     return state;
 }
 
-void slots_save_state(SaveState state) {
+static void _slots_save_state(SaveState state) {
     snprintf(res, 200, "1=%d;2=%d;3=%d;", state.save1_in_use ? 1 : 0, state.save2_in_use ? 1 : 0, state.save3_in_use ? 1 : 0);
 
     APP_LOG(APP_LOG_LEVEL_WARNING, "updating state: %s", res);
@@ -372,10 +369,10 @@ bool workout_end_current() {
     Workout *w = workout_create();
     workout_load_current(w);
 
-    workout_save_to_key(w, /*deep*/true, data_position);
-    slots_save_state(state);
+    _workout_save_to_key(w, /*deep*/true, data_position);
+    _slots_save_state(state);
 
-    workout_reset(w, /*deep*/true);
+    _workout_reset(w, /*deep*/true);
     workout_save_current(w, /*deep*/true);
 
     workout_destroy(w);
@@ -416,5 +413,5 @@ void workout_delete_by_slot(uint16_t slot_number) {
         }
     }
 
-    slots_save_state(state);
+    _slots_save_state(state);
 }
