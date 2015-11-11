@@ -21,7 +21,7 @@ static TextLayer *s_textlayer_2;
 static TextLayer *s_textlayer_3;
 static TextLayer *s_textlayer_4;
 
-static void initialise_ui(void) {
+static void _initialise_ui(void) {
     s_window = window_create();
 
     s_res_gothic_18_bold = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
@@ -51,7 +51,7 @@ static void initialise_ui(void) {
     layer_add_child(window_get_root_layer(s_window), (Layer *) s_textlayer_4);
 }
 
-static void destroy_ui(void) {
+static void _destroy_ui(void) {
     //window_destroy(s_window);
     text_layer_destroy(s_textlayer_1);
     text_layer_destroy(s_textlayer_2);
@@ -60,7 +60,7 @@ static void destroy_ui(void) {
 }
 // END AUTO-GENERATED UI CODE
 
-static void progress_bar_layer_update(ProgressBarLayer *bar, GContext *ctx) {
+static void _progress_bar_layer_update(ProgressBarLayer *bar, GContext *ctx) {
     ProgressData *data = (ProgressData *) layer_get_data(bar);
 
     GRect bounds = layer_get_bounds(bar);
@@ -75,27 +75,27 @@ static void progress_bar_layer_update(ProgressBarLayer *bar, GContext *ctx) {
     graphics_fill_rect(ctx, GRect(0, 0, width_progress, bounds.size.h), 4, GCornersAll);
 }
 
-static ProgressBarLayer *progress_bar_layer_create(GRect bounds, ProgressData initial_data) {
+static ProgressBarLayer *_progress_bar_layer_create(GRect bounds, ProgressData initial_data) {
     ProgressBarLayer *progress_bar_layer = layer_create_with_data(bounds, sizeof(ProgressData));
     ProgressData *data = (ProgressData *) layer_get_data(progress_bar_layer);
     data->progress = initial_data.progress;
     data->maximum = initial_data.maximum;
-    layer_set_update_proc(progress_bar_layer, progress_bar_layer_update);
+    layer_set_update_proc(progress_bar_layer, _progress_bar_layer_update);
     layer_mark_dirty(progress_bar_layer);
 
     return progress_bar_layer;
 }
 
-static void progress_bar_destroy(ProgressBarLayer *progress_bar_layer) {
+static void _progress_bar_destroy(ProgressBarLayer *progress_bar_layer) {
     layer_destroy(progress_bar_layer);
 }
 
-static void handle_window_unload(Window *window) {
-    destroy_ui();
+static void _handle_window_unload(Window *window) {
+    _destroy_ui();
 
-    progress_bar_destroy(progress_bar_layer_1);
-    progress_bar_destroy(progress_bar_layer_2);
-    progress_bar_destroy(progress_bar_layer_3);
+    _progress_bar_destroy(progress_bar_layer_1);
+    _progress_bar_destroy(progress_bar_layer_2);
+    _progress_bar_destroy(progress_bar_layer_3);
 
     // TODO: maybe implement?, then remove "deregister_callbacks" method
     //mqueue_destroy();
@@ -106,7 +106,7 @@ static char group_str[2] = "?";
 static char operation_str[3] = "m?";
 static bool upload_in_progress[3];
 
-static void slot_data_received(int index, Layer *bar, char *operation, char *data) {
+static void _slot_data_received(int index, Layer *bar, char *operation, char *data) {
     APP_LOG(APP_LOG_LEVEL_INFO, "slot %d data received", index);
 
     ProgressData *bar_data = (ProgressData *) layer_get_data(bar);
@@ -120,19 +120,19 @@ static void slot_data_received(int index, Layer *bar, char *operation, char *dat
     }
 }
 
-static void slot_0_data_received(char *operation, char *data) {
-    slot_data_received(0, progress_bar_layer_1, operation, data);
+static void _slot_0_data_received(char *operation, char *data) {
+    _slot_data_received(0, progress_bar_layer_1, operation, data);
 }
 
-static void slot_1_data_received(char *operation, char *data) {
-    slot_data_received(1, progress_bar_layer_2, operation, data);
+static void _slot_1_data_received(char *operation, char *data) {
+    _slot_data_received(1, progress_bar_layer_2, operation, data);
 }
 
-static void slot_2_data_received(char *operation, char *data) {
-    slot_data_received(2, progress_bar_layer_3, operation, data);
+static void _slot_2_data_received(char *operation, char *data) {
+    _slot_data_received(2, progress_bar_layer_3, operation, data);
 }
 
-static void prepare_upload_by_data_position(uint32_t index, uint32_t data_position) {
+static void _prepare_upload_by_data_position(uint32_t index, uint32_t data_position) {
     group_str[0] = (char) ('0' + index);
 
     Workout *w = workout_create();
@@ -166,30 +166,30 @@ static void prepare_upload_by_data_position(uint32_t index, uint32_t data_positi
     workout_destroy(w);
 }
 
-static void prepare_upload() {
+static void _prepare_upload() {
     for (int i = 0; i < 3; ++i) {
         upload_in_progress[i] = true;
     }
 
     SaveState state = slots_load_state();
     if (state.save1_in_use) {
-        prepare_upload_by_data_position(0, DATA_WORKOUT_SAVE_1);
+        _prepare_upload_by_data_position(0, DATA_WORKOUT_SAVE_1);
     } else {
         upload_in_progress[0] = false;
     }
     if (state.save2_in_use) {
-        prepare_upload_by_data_position(1, DATA_WORKOUT_SAVE_2);
+        _prepare_upload_by_data_position(1, DATA_WORKOUT_SAVE_2);
     } else {
         upload_in_progress[1] = false;
     }
     if (state.save3_in_use) {
-        prepare_upload_by_data_position(2, DATA_WORKOUT_SAVE_3);
+        _prepare_upload_by_data_position(2, DATA_WORKOUT_SAVE_3);
     } else {
         upload_in_progress[2] = false;
     }
 }
 
-static void dump(uint32_t pos) {
+static void _dump(uint32_t pos) {
     char slots[30];
 
     int i = 0;
@@ -217,10 +217,10 @@ static void dump(uint32_t pos) {
     }
 }
 
-static void initialize_progress_bars() {
-    progress_bar_layer_1 = progress_bar_layer_create(GRect(6, 64, 130, 10), (ProgressData) {.progress = 0, .maximum = M__COUNT + 1});
-    progress_bar_layer_2 = progress_bar_layer_create(GRect(6, 97, 130, 10), (ProgressData) {.progress = 0, .maximum = M__COUNT + 1});
-    progress_bar_layer_3 = progress_bar_layer_create(GRect(6, 132, 130, 10), (ProgressData) {.progress = 0, .maximum = M__COUNT + 1});
+static void _initialize_progress_bars() {
+    progress_bar_layer_1 = _progress_bar_layer_create(GRect(6, 64, 130, 10), (ProgressData) {.progress = 0, .maximum = M__COUNT + 1});
+    progress_bar_layer_2 = _progress_bar_layer_create(GRect(6, 97, 130, 10), (ProgressData) {.progress = 0, .maximum = M__COUNT + 1});
+    progress_bar_layer_3 = _progress_bar_layer_create(GRect(6, 132, 130, 10), (ProgressData) {.progress = 0, .maximum = M__COUNT + 1});
 
     SaveState state = slots_load_state();
     if (state.save1_in_use) {
@@ -243,56 +243,56 @@ static void initialize_progress_bars() {
     if (persist_exists(DATA_WORKOUT_CURRENT)) {
         APP_LOG(APP_LOG_LEVEL_INFO, "current exists:");
 
-        dump(DATA_WORKOUT_CURRENT);
+        _dump(DATA_WORKOUT_CURRENT);
     } else {
         APP_LOG(APP_LOG_LEVEL_INFO, "no current");
     }
     if (persist_exists(DATA_WORKOUT_SAVE_1)) {
         APP_LOG(APP_LOG_LEVEL_INFO, "save1 exists:");
 
-        dump(DATA_WORKOUT_SAVE_1);
+        _dump(DATA_WORKOUT_SAVE_1);
     } else {
         APP_LOG(APP_LOG_LEVEL_INFO, "no save1");
     }
     if (persist_exists(DATA_WORKOUT_SAVE_2)) {
         APP_LOG(APP_LOG_LEVEL_INFO, "save2 exists:");
 
-        dump(DATA_WORKOUT_SAVE_2);
+        _dump(DATA_WORKOUT_SAVE_2);
     } else {
         APP_LOG(APP_LOG_LEVEL_INFO, "no save2");
     }
 }
 
-static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
+static void _select_click_handler(ClickRecognizerRef recognizer, void *context) {
     text_layer_set_text(s_textlayer_1, "Uploading workouts,\nplease wait...");
 
     mqueue_deregister_handlers();
-    mqueue_register_handler("0", slot_0_data_received);
-    mqueue_register_handler("1", slot_1_data_received);
-    mqueue_register_handler("2", slot_2_data_received);
+    mqueue_register_handler("0", _slot_0_data_received);
+    mqueue_register_handler("1", _slot_1_data_received);
+    mqueue_register_handler("2", _slot_2_data_received);
     mqueue_init(false);
-    prepare_upload();
+    _prepare_upload();
     mqueue_enable_sending();
 }
 
-static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
+static void _prev_click_handler(ClickRecognizerRef recognizer, void *context) {
     hide_window_upload();
 }
 
-static void click_config_provider(void *context) {
-    window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
-    window_single_click_subscribe(BUTTON_ID_BACK, prev_click_handler);
+static void _click_config_provider(void *context) {
+    window_single_click_subscribe(BUTTON_ID_SELECT, _select_click_handler);
+    window_single_click_subscribe(BUTTON_ID_BACK, _prev_click_handler);
 }
 
 
 void show_window_upload(void) {
-    initialise_ui();
-    initialize_progress_bars();
+    _initialise_ui();
+    _initialize_progress_bars();
 
-    window_set_click_config_provider(s_window, click_config_provider);
+    window_set_click_config_provider(s_window, _click_config_provider);
 
     window_set_window_handlers(s_window, (WindowHandlers) {
-            .unload = handle_window_unload,
+            .unload = _handle_window_unload,
     });
     window_stack_push(s_window, true);
 }

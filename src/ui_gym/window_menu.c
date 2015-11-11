@@ -23,13 +23,11 @@ typedef enum {
 
 static WorkoutState workout_state = STATE_NOT_ACTIVE;
 
-static void check_workout_state(Window *window);
-
-static uint16_t menu_get_num_sections_callback(MenuLayer *menu_layer, void *data) {
+static uint16_t _menu_get_num_sections_callback(MenuLayer *menu_layer, void *data) {
     return 2;
 }
 
-static uint16_t menu_get_num_rows_callback(MenuLayer *menu_layer, uint16_t section_index, void *data) {
+static uint16_t _menu_get_num_rows_callback(MenuLayer *menu_layer, uint16_t section_index, void *data) {
     switch (section_index) {
         case 0:
             if (workout_state == STATE_NOT_ACTIVE) {
@@ -46,11 +44,11 @@ static uint16_t menu_get_num_rows_callback(MenuLayer *menu_layer, uint16_t secti
     }
 }
 
-static int16_t menu_get_header_height_callback(MenuLayer *menu_layer, uint16_t section_index, void *data) {
+static int16_t _menu_get_header_height_callback(MenuLayer *menu_layer, uint16_t section_index, void *data) {
     return MENU_CELL_BASIC_HEADER_HEIGHT;
 }
 
-static int16_t menu_get_cell_height_callback(MenuLayer *menu_layer, MenuIndex *menu_index, void *data) {
+static int16_t _menu_get_cell_height_callback(MenuLayer *menu_layer, MenuIndex *menu_index, void *data) {
     if ((menu_index->section == 0) ||
             (menu_index->section == 1 && menu_index->row == 0)) {
         return 30;
@@ -61,7 +59,7 @@ static int16_t menu_get_cell_height_callback(MenuLayer *menu_layer, MenuIndex *m
 
 
 // Here we draw what each header is
-static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, uint16_t section_index, void *data) {
+static void _menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, uint16_t section_index, void *data) {
     // Determine which section we're working with
     switch (section_index) {
         case 0:
@@ -78,7 +76,7 @@ static void menu_draw_header_callback(GContext *ctx, const Layer *cell_layer, ui
 }
 
 // This is the menu item draw callback where you specify what each item should look like
-static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *data) {
+static void _menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *data) {
     // Determine which section we're going to draw in
     switch (cell_index->section) {
         case 0:
@@ -152,8 +150,25 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
     }
 }
 
-// Here we capture when a user selects a menu item
-static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *data) {
+static void _check_workout_state(Window *window) {
+    Workout *w = workout_create_without_machines();
+    workout_load_current_without_machines(w);
+
+    workout_state = STATE_NOT_ACTIVE;
+    if (w->time_start != 0) workout_state = STATE_ACTIVE;
+    if (w->time_end != 0) workout_state = STATE_FINISHED;
+
+    SaveState state = slots_load_state();
+    uint8_t slots_taken = (uint8_t) ((state.save1_in_use ? 1 : 0) + (state.save2_in_use ? 1 : 0) + (state.save3_in_use ? 1 : 0));
+    upload_status_str[0] = (char) ('0' + slots_taken);
+    delete_status_str[0] = (char) ('0' + slots_taken);
+
+    menu_layer_reload_data(menu_layer);
+
+    workout_destroy(w);
+}
+
+static void _menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *data) {
     if (workout_state == STATE_NOT_ACTIVE && cell_index->section == 0 && cell_index->row == 0) { // Start
         show_window_location();
         return;
@@ -170,13 +185,13 @@ static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, v
             show_window_error("All save slots are taken. Please upload some of workouts to continue.");
             return;
         }
-        check_workout_state(NULL);
+        _check_workout_state(NULL);
         return;
     }
     if ((workout_state == STATE_ACTIVE && cell_index->section == 0 && cell_index->row == 2) ||
             (workout_state == STATE_FINISHED && cell_index->section == 0 && cell_index->row == 2)) { // Cancel
         workout_cancel_current();
-        check_workout_state(NULL);
+        _check_workout_state(NULL);
 
         menu_layer_set_selected_index(menu_layer, (MenuIndex) {.row = 0, .section = 0}, MenuRowAlignNone, false);
         return;
@@ -195,44 +210,26 @@ static void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, v
     }
 }
 
-static void check_workout_state(Window *window) {
-    Workout *w = workout_create_without_machines();
-    workout_load_current_without_machines(w);
-
-    workout_state = STATE_NOT_ACTIVE;
-    if (w->time_start != 0) workout_state = STATE_ACTIVE;
-    if (w->time_end != 0) workout_state = STATE_FINISHED;
-
-    SaveState state = slots_load_state();
-    uint8_t slots_taken = (uint8_t) ((state.save1_in_use ? 1 : 0) + (state.save2_in_use ? 1 : 0) + (state.save3_in_use ? 1 : 0));
-    upload_status_str[0] = (char) ('0' + slots_taken);
-    delete_status_str[0] = (char) ('0' + slots_taken);
-
-    menu_layer_reload_data(menu_layer);
-
-    workout_destroy(w);
-}
-
 // This initializes the menu upon window load
-static void window_menu_load(Window *window) {
+static void _window_menu_load(Window *window) {
     Layer *window_layer = window_get_root_layer(window);
 
     menu_layer = menu_layer_create(layer_get_frame(window_layer));
     menu_layer_set_callbacks(menu_layer, NULL, (MenuLayerCallbacks) {
-            .get_num_sections = menu_get_num_sections_callback,
-            .get_num_rows = menu_get_num_rows_callback,
-            .get_header_height = menu_get_header_height_callback,
-            .get_cell_height = menu_get_cell_height_callback,
-            .draw_header = menu_draw_header_callback,
-            .draw_row = menu_draw_row_callback,
-            .select_click = menu_select_callback,
+            .get_num_sections = _menu_get_num_sections_callback,
+            .get_num_rows = _menu_get_num_rows_callback,
+            .get_header_height = _menu_get_header_height_callback,
+            .get_cell_height = _menu_get_cell_height_callback,
+            .draw_header = _menu_draw_header_callback,
+            .draw_row = _menu_draw_row_callback,
+            .select_click = _menu_select_callback,
     });
     menu_layer_set_click_config_onto_window(menu_layer, window);
 
     layer_add_child(window_layer, menu_layer_get_layer(menu_layer));
 }
 
-static void window_menu_unload(Window *window) {
+static void _window_menu_unload(Window *window) {
     menu_layer_destroy(menu_layer);
 }
 
@@ -241,9 +238,9 @@ void show_window_menu(void) {
 
     // Setup the window handlers
     window_set_window_handlers(window, (WindowHandlers) {
-            .load = window_menu_load,
-            .unload = window_menu_unload,
-            .appear = check_workout_state
+            .load = _window_menu_load,
+            .unload = _window_menu_unload,
+            .appear = _check_workout_state
     });
 
     window_stack_push(window, true /* Animated */);

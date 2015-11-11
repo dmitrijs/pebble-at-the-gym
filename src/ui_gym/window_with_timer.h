@@ -1,3 +1,3 @@
-void show_window_with_timer(bool new_workout, char location);
+#pragma once
 
-void hide_window_with_timer(void);
+void show_window_with_timer(bool new_workout, char location);

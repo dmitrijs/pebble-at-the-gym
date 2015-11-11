@@ -1,12 +1,11 @@
 #include "window_error.h"
 #include <pebble.h>
 
-// BEGIN AUTO-GENERATED UI CODE; DO NOT MODIFY
 static Window *s_window;
 static GFont s_res_gothic_24_bold;
 static TextLayer *s_textlayer_1;
 
-static void initialise_ui(const char *msg) {
+static void _initialise_ui(const char *msg) {
     s_window = window_create();
 
     s_res_gothic_24_bold = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
@@ -18,20 +17,19 @@ static void initialise_ui(const char *msg) {
     layer_add_child(window_get_root_layer(s_window), (Layer *) s_textlayer_1);
 }
 
-static void destroy_ui(void) {
+static void _destroy_ui(void) {
     window_destroy(s_window);
     text_layer_destroy(s_textlayer_1);
 }
-// END AUTO-GENERATED UI CODE
 
-static void handle_window_unload(Window *window) {
-    destroy_ui();
+static void _handle_window_unload(Window *window) {
+    _destroy_ui();
 }
 
 void show_window_error(const char *msg) {
-    initialise_ui(msg);
+    _initialise_ui(msg);
     window_set_window_handlers(s_window, (WindowHandlers) {
-            .unload = handle_window_unload,
+            .unload = _handle_window_unload,
     });
     window_stack_push(s_window, true);
 }

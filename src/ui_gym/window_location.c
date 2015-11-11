@@ -64,11 +64,15 @@ static void menu_location_draw_row_callback(GContext *ctx, const Layer *cell_lay
     menu_cell_title_draw(ctx, cell_layer, companies[cell_index->section].locations[cell_index->row].title);
 }
 
+static void _hide_window_location(void) {
+    window_stack_remove(window, true);
+}
+
 static void menu_location_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *data) {
 
     show_window_with_timer(true /* new workout */, companies[cell_index->section].locations[cell_index->row].code);
 
-    hide_window_location();
+    _hide_window_location();
 }
 
 static void window_location_load(Window *window) {
@@ -114,8 +118,4 @@ void show_window_location() {
     });
 
     window_stack_push(window, true /* Animated */);
-}
-
-void hide_window_location(void) {
-    window_stack_remove(window, true);
 }

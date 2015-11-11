@@ -6,7 +6,7 @@ static Window *s_window;
 static GBitmap *s_res_prepare_bg;
 static BitmapLayer *s_prepare;
 
-static void initialise_ui(void) {
+static void _initialise_ui(void) {
     s_window = window_create();
 
     s_res_prepare_bg = gbitmap_create_with_resource(RESOURCE_ID_PREPARE_BG);
@@ -17,25 +17,21 @@ static void initialise_ui(void) {
     layer_add_child(window_get_root_layer(s_window), (Layer *) s_prepare);
 }
 
-static void destroy_ui(void) {
+static void _destroy_ui(void) {
     window_destroy(s_window);
     bitmap_layer_destroy(s_prepare);
     gbitmap_destroy(s_res_prepare_bg);
 }
 // END AUTO-GENERATED UI CODE
 
-static void handle_window_unload(Window *window) {
-    destroy_ui();
+static void _handle_window_unload(Window *window) {
+    _destroy_ui();
 }
 
 void show_window_prepare(void) {
-    initialise_ui();
+    _initialise_ui();
     window_set_window_handlers(s_window, (WindowHandlers) {
-            .unload = handle_window_unload,
+            .unload = _handle_window_unload,
     });
     window_stack_push(s_window, true);
-}
-
-void hide_window_prepare(void) {
-    window_stack_remove(s_window, true);
 }

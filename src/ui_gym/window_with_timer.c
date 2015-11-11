@@ -26,7 +26,7 @@ static TextLayer *s_machine;
 static TextLayer *s_normal_kg;
 static Layer *s_layer_1;
 
-static void initialise_ui(void) {
+static void _initialise_ui(void) {
     s_window = window_create();
 
     s_res_bitham_30_black = fonts_get_system_font(FONT_KEY_BITHAM_30_BLACK);
@@ -106,7 +106,7 @@ static void initialise_ui(void) {
     layer_add_child(window_get_root_layer(s_window), s_layer_1);
 }
 
-static void destroy_ui(void) {
+static void _destroy_ui(void) {
     window_destroy(s_window);
     text_layer_destroy(s_set_3);
     text_layer_destroy(s_set_2);
@@ -121,13 +121,13 @@ static void destroy_ui(void) {
 }
 // END AUTO-GENERATED UI CODE
 
-static void handle_window_unload(Window *window) {
+static void _handle_window_unload(Window *window) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "unload called, ui was destroyed");
-    destroy_ui();
+    _destroy_ui();
     workout_destroy(workout);
 }
 
-static void update_machine_layers() {
+static void _update_machine_layers() {
     text_layer_set_text(s_machine, current_machine->title);
 
     snprintf(current_machine->warmup_kg_str, 4, "%d", current_machine->warmup_kg);
@@ -145,22 +145,22 @@ static void update_machine_layers() {
     layer_mark_dirty(s_layer_1);
 }
 
-static void clear_inv_layer() {
+static void _clear_inv_layer() {
     text_layer_set_background_color(editable_fields[current_field], GColorClear);
     text_layer_set_text_color(editable_fields[current_field], GColorBlack);
 }
 
-static void update_inv_layer() {
+static void _update_inv_layer() {
     text_layer_set_background_color(editable_fields[current_field], GColorDarkGreen);
     text_layer_set_text_color(editable_fields[current_field], GColorWhite);
 }
 
-static void decrease_click_handler(ClickRecognizerRef recognizer, void *context) {
+static void _decrease_click_handler(ClickRecognizerRef recognizer, void *context) {
     switch (current_field) {
         case F_TITLE:
             if (current_machine->next != NULL) {
                 current_machine = current_machine->next;
-                update_machine_layers();
+                _update_machine_layers();
             }
             break;
         case F_WARMUP_KG:
@@ -181,15 +181,15 @@ static void decrease_click_handler(ClickRecognizerRef recognizer, void *context)
         default:
             return;
     }
-    update_machine_layers();
+    _update_machine_layers();
 }
 
-static void increase_click_handler(ClickRecognizerRef recognizer, void *context) {
+static void _increase_click_handler(ClickRecognizerRef recognizer, void *context) {
     switch (current_field) {
         case F_TITLE:
             if (current_machine->prev != NULL) {
                 current_machine = current_machine->prev;
-                update_machine_layers();
+                _update_machine_layers();
             }
             break;
         case F_WARMUP_KG:
@@ -210,23 +210,27 @@ static void increase_click_handler(ClickRecognizerRef recognizer, void *context)
         default:
             return;
     }
-    update_machine_layers();
+    _update_machine_layers();
 }
 
-static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
+static void _hide_window_with_timer(void) {
+    window_stack_remove(s_window, true);
+}
+
+static void _prev_click_handler(ClickRecognizerRef recognizer, void *context) {
     if (current_field == 0) {
-        hide_window_with_timer();
+        _hide_window_with_timer();
         return;
     }
     if (current_field > 0) {
-        clear_inv_layer();
+        _clear_inv_layer();
         current_field--;
-        update_inv_layer();
+        _update_inv_layer();
     }
 }
 
-static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
-    clear_inv_layer();
+static void _next_click_handler(ClickRecognizerRef recognizer, void *context) {
+    _clear_inv_layer();
     current_field++;
     if (current_field == F__COUNT) {
         current_field = 0;
@@ -245,21 +249,21 @@ static void next_click_handler(ClickRecognizerRef recognizer, void *context) {
                 workout_save_current(workout, /*deep*/false);
             }
         }
-        update_machine_layers();
+        _update_machine_layers();
     }
 
-    update_inv_layer();
+    _update_inv_layer();
 }
 
-static void click_config_provider(void *context) {
-    window_single_click_subscribe(BUTTON_ID_SELECT, next_click_handler);
-    window_single_click_subscribe(BUTTON_ID_BACK, prev_click_handler);
+static void _click_config_provider(void *context) {
+    window_single_click_subscribe(BUTTON_ID_SELECT, _next_click_handler);
+    window_single_click_subscribe(BUTTON_ID_BACK, _prev_click_handler);
 
-    window_single_repeating_click_subscribe(BUTTON_ID_UP, 100, increase_click_handler);
-    window_single_repeating_click_subscribe(BUTTON_ID_DOWN, 100, decrease_click_handler);
+    window_single_repeating_click_subscribe(BUTTON_ID_UP, 100, _increase_click_handler);
+    window_single_repeating_click_subscribe(BUTTON_ID_DOWN, 100, _decrease_click_handler);
 }
 
-static void draw_rectangles(struct Layer *layer, GContext *ctx) {
+static void _draw_rectangles(struct Layer *layer, GContext *ctx) {
     int16_t left_pos = 4;
     int16_t top_pos = 3;
     Machine *m = workout->first_machine;
@@ -288,13 +292,13 @@ static void draw_rectangles(struct Layer *layer, GContext *ctx) {
 }
 
 void show_window_with_timer(bool new_workout, char location) {
-    initialise_ui();
+    _initialise_ui();
     window_set_window_handlers(s_window, (WindowHandlers) {
-            .unload = handle_window_unload,
+            .unload = _handle_window_unload,
     });
 
-    window_set_click_config_provider(s_window, click_config_provider);
-    layer_set_update_proc(s_layer_1, draw_rectangles);
+    window_set_click_config_provider(s_window, _click_config_provider);
+    layer_set_update_proc(s_layer_1, _draw_rectangles);
 
     editable_fields[F_TITLE] = s_machine;
     editable_fields[F_WARMUP_KG] = s_warmup_kg;
@@ -319,12 +323,8 @@ void show_window_with_timer(bool new_workout, char location) {
 
     current_machine = workout->first_machine;
 
-    update_machine_layers();
-    update_inv_layer();
+    _update_machine_layers();
+    _update_inv_layer();
 
     window_stack_push(s_window, true);
-}
-
-void hide_window_with_timer(void) {
-    window_stack_remove(s_window, true);
 }

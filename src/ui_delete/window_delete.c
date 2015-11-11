@@ -8,7 +8,9 @@ static TextLayer *s_textlayer_2;
 static TextLayer *s_textlayer_3;
 static TextLayer *s_textlayer_4;
 
-static void initialise_ui(void) {
+static bool delete_in_progress[3];
+
+static void _initialise_ui(void) {
     s_window = window_create();
 
     s_res_gothic_18_bold = fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD);
@@ -38,20 +40,18 @@ static void initialise_ui(void) {
     layer_add_child(window_get_root_layer(s_window), (Layer *) s_textlayer_4);
 }
 
-static void destroy_ui(void) {
+static void _destroy_ui(void) {
     text_layer_destroy(s_textlayer_1);
     text_layer_destroy(s_textlayer_2);
     text_layer_destroy(s_textlayer_3);
     text_layer_destroy(s_textlayer_4);
 }
 
-static void handle_window_unload(Window *window) {
-    destroy_ui();
+static void _handle_window_unload(Window *window) {
+    _destroy_ui();
 }
 
-static bool delete_in_progress[3];
-
-void do_delete() {
+static void _do_delete() {
     SaveState state = slots_load_state();
     if (state.save1_in_use) {
         workout_delete_by_slot(1);
@@ -68,7 +68,7 @@ void do_delete() {
     }
 }
 
-void initialize_delete_info_texts() {
+static void _initialize_delete_info_texts() {
     SaveState state = slots_load_state();
     if (!state.save1_in_use) {
         layer_remove_from_parent(text_layer_get_layer(s_textlayer_2));
@@ -81,33 +81,33 @@ void initialize_delete_info_texts() {
     }
 }
 
-static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
+static void _select_click_handler(ClickRecognizerRef recognizer, void *context) {
     text_layer_set_text(s_textlayer_1, "Deleting workouts,\nplease wait...");
 
-    do_delete();
+    _do_delete();
 }
 
-static void prev_click_handler(ClickRecognizerRef recognizer, void *context) {
-    hide_window_delete();
+static void _hide_window_delete(void) {
+    window_stack_remove(s_window, true);
 }
 
-static void click_config_provider(void *context) {
-    window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
-    window_single_click_subscribe(BUTTON_ID_BACK, prev_click_handler);
+static void _prev_click_handler(ClickRecognizerRef recognizer, void *context) {
+    _hide_window_delete();
+}
+
+static void _click_config_provider(void *context) {
+    window_single_click_subscribe(BUTTON_ID_SELECT, _select_click_handler);
+    window_single_click_subscribe(BUTTON_ID_BACK, _prev_click_handler);
 }
 
 void show_window_delete(void) {
-    initialise_ui();
-    initialize_delete_info_texts();
+    _initialise_ui();
+    _initialize_delete_info_texts();
 
-    window_set_click_config_provider(s_window, click_config_provider);
+    window_set_click_config_provider(s_window, _click_config_provider);
 
     window_set_window_handlers(s_window, (WindowHandlers) {
-            .unload = handle_window_unload,
+            .unload = _handle_window_unload,
     });
     window_stack_push(s_window, true);
-}
-
-void hide_window_delete(void) {
-    window_stack_remove(s_window, true);
 }

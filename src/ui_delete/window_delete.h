@@ -1,3 +1,3 @@
-void show_window_delete(void);
+#pragma once
 
-void hide_window_delete(void);
+void show_window_delete(void);
