@@ -64,7 +64,7 @@ struct SaveState {
     bool save2_in_use;
     bool save3_in_use;
 };
-// TODO: replace with "persist_exists"
+// TODO: replace with "persist_existsaref"
 
 typedef struct Workout Workout;
 struct Workout {

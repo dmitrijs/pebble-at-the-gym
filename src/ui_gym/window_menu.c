@@ -6,11 +6,14 @@
 #include "../ui_upload/window_upload.h"
 #include "../ui/window_error.h"
 #include "../data/machine.h"
+#include "../ui_delete/window_delete.h"
 
 static Window *window;
 static MenuLayer *menu_layer;
 
 char *upload_status_str = "? workout(s) to upload";
+// TODO: only delete workouts that were uploaded
+char *delete_status_str = "? workout(s) to delete";
 
 /*typedef enum {
     MENUITEM_START,
@@ -83,7 +86,7 @@ static uint16_t menu_get_num_rows_callback(MenuLayer *menu_layer, uint16_t secti
             }
 
         case 1:
-            return 2;
+            return 3;
 
         default:
             return 0;
@@ -184,6 +187,10 @@ static void menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuI
                 case 1:
                     menu_cell_basic_draw(ctx, cell_layer, "Upload workouts", upload_status_str, NULL);
                     break;
+
+                case 2:
+                    menu_cell_basic_draw(ctx, cell_layer, "Delete workouts", delete_status_str, NULL);
+                    break;
                 default:
                     break;
             }
@@ -229,6 +236,10 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
         show_window_upload();
         return;
     }
+    if (cell_index->section == 1 && cell_index->row == 2) {
+        show_window_delete();
+        return;
+    }
 }
 
 void check_workout_state(Window *window) {
@@ -242,6 +253,7 @@ void check_workout_state(Window *window) {
     SaveState state = slots_load_state();
     uint8_t slots_taken = (uint8_t) ((state.save1_in_use ? 1 : 0) + (state.save2_in_use ? 1 : 0) + (state.save3_in_use ? 1 : 0));
     upload_status_str[0] = (char) ('0' + slots_taken);
+    delete_status_str[0] = (char) ('0' + slots_taken);
 
     menu_layer_reload_data(menu_layer);
 

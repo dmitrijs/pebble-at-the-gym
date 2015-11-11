@@ -97,6 +97,7 @@ static void handle_window_unload(Window *window) {
     progress_bar_destroy(progress_bar_layer_2);
     progress_bar_destroy(progress_bar_layer_3);
 
+    // TODO: maybe implement?, then remove "deregister_callbacks" method
     //mqueue_destroy();
 }
 
@@ -111,9 +112,6 @@ void slot_data_received(int index, Layer *bar, char *operation, char *data) {
     ProgressData *bar_data = (ProgressData *) layer_get_data(bar);
     bar_data->progress = bar_data->maximum;
     layer_mark_dirty(bar);
-
-    APP_LOG(APP_LOG_LEVEL_INFO, "deleting slot %d data", index + 1);
-    workout_delete_by_slot((uint16_t) (index + 1));
 
     upload_in_progress[index] = false;
 
@@ -268,6 +266,7 @@ void initialize_progress_bars() {
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
     text_layer_set_text(s_textlayer_1, "Uploading workouts,\nplease wait...");
 
+    mqueue_deregister_handlers();
     mqueue_register_handler("0", slot_0_data_received);
     mqueue_register_handler("1", slot_1_data_received);
     mqueue_register_handler("2", slot_2_data_received);

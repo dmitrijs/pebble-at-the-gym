@@ -65,6 +65,8 @@ static void destroy_message_queue(MessageQueue *queue);
 
 static void outbox_sent_callback(DictionaryIterator *iterator, void *context);
 
+static void inbox_dropped_callback(AppMessageResult reason, void *context);
+
 static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context);
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context);
@@ -78,12 +80,19 @@ static bool sending = false;
 static bool can_send = false;
 static bool s_autostart = false;
 
+static bool s_connection_was_opened = false;
+
 void mqueue_init(bool autostart) {
-    AppMessageResult result = app_message_open(500, 3000);
-    if (APP_MSG_OK != result) {
-        APP_LOG(APP_LOG_LEVEL_ERROR, "INIT ERROR: %s", translate_error(result));
+    if (!s_connection_was_opened) {
+        AppMessageResult result = app_message_open(500, 3000);
+        if (APP_MSG_OK != result) {
+            APP_LOG(APP_LOG_LEVEL_ERROR, "INIT ERROR: %s", translate_error(result));
+        }
+        s_connection_was_opened = true;
     }
-    // app_message_register_inbox_dropped(inbox_dropped_callback);
+
+    app_message_deregister_callbacks();
+    app_message_register_inbox_dropped(inbox_dropped_callback);
     app_message_register_outbox_sent(outbox_sent_callback);
     app_message_register_outbox_failed(outbox_failed_callback);
     app_message_register_inbox_received(inbox_received_callback);
@@ -121,6 +130,19 @@ bool mqueue_add(char *group, char *operation, char *data) {
     return true;
 }
 
+void mqueue_deregister_handlers() {
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Removing all old handlers");
+
+    HandlerQueue *hq = handler_queue;
+    while (hq != NULL) {
+        free(hq->group);
+        HandlerQueue *next = hq->next;
+        free(hq);
+        hq = next;
+    }
+    handler_queue = NULL;
+}
+
 void mqueue_register_handler(char *group, MessageHandler handler) {
     HandlerQueue *hq = malloc(sizeof(HandlerQueue));
     hq->next = NULL;
@@ -153,6 +175,12 @@ static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "SENT: %s, %s, %s", sent->message->group, sent->message->operation, sent->message->data);
     msg_queue = msg_queue->next;
     destroy_message_queue(sent);
+    send_next_message();
+}
+
+static void inbox_dropped_callback(AppMessageResult reason, void *context) {
+    sending = false;
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "DROPPED: %s", translate_error(reason));
     send_next_message();
 }
 

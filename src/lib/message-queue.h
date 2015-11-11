@@ -40,4 +40,6 @@ void mqueue_init(bool autostart);
 bool mqueue_add(char *group, char *operation, char *params);
 
 void mqueue_register_handler(char *group, MessageHandler handler);
+void mqueue_deregister_handlers();
+
 void mqueue_enable_sending(void);
