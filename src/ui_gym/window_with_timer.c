@@ -3,12 +3,12 @@
 #include "window_with_timer.h"
 #include "../data/machine.h"
 
-TextLayer *editable_fields[F__COUNT];
-size_t current_field;
+static TextLayer *editable_fields[F__COUNT];
+static size_t current_field;
 
-Machine *current_machine;
+static Machine *current_machine;
 
-Workout *workout;
+static Workout *workout;
 
 static Window *s_window;
 static GFont s_res_bitham_30_black;
