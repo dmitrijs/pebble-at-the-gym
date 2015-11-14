@@ -18,184 +18,143 @@ void workout_serialize_for_upload(char *res, Workout *w) {
     snprintf(res, 200, "wl=%c ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
 }
 
-static void _machine_serialize(char *res, Machine *m) {
-    snprintf(res, 200, "id=%d ww=%d wn=%d ", m->mkey, m->warmup_kg, m->normal_kg);
-    snprintf(tmp, 200, "s1=%d s2=%d s3=%d di=%d dt=%ld;", m->set_1, m->set_2, m->set_3, (m->is_done ? 1 : 0), m->time_done);
-    strcat(res, tmp);
-}
-
-static void _workout_serialize(char *res, Workout *w) {
-    snprintf(res, 200, "wl=%c ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
-}
-
-static void _workout_serialize_version1(uint8_t *buf, size_t *size, Workout *w) {
-    /**size = 0;
-
-    buf[0] = '1'; // serialization version
-    buf[1] = '-'; // reserved
-    buf[2] = (uint8_t) w->location; // location
-    long time_start = w->time_start;
-    buf[3] = (uint8_t) (time_start % ); // location
-    buf[4] = (uint8_t) (w->time_start >> 3); // location
-    buf[5] = (uint8_t) (w->time_start >> 2); // location
-    buf[6] = (uint8_t) (w->time_start >> 1); // location
-
-    snprintf(res, 200, "wl=%c ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
-
+static void dump(Workout *w, uint8_t *buf, int len) {
+    workout_serialize_for_upload(res, w);
+    APP_LOG(APP_LOG_LEVEL_WARNING, "workout: %s", res);
 
     Machine *m = w->first_machine;
     while (m != NULL) {
-        _machine_save_to_key(m, data_key);
+        machine_serialize_for_upload(res, m);
+        APP_LOG(APP_LOG_LEVEL_WARNING, "machine: %s", res);
         m = m->next;
-    }*/
+    }
 
+    for (int i = 0; i < len; i++) {
+        APP_LOG(APP_LOG_LEVEL_DEBUG, "buf[%d] = %d", i, buf[i]);
+    }
 }
 
-//static void _machine_save_to_key(Machine *m, uint32_t data_key) {
-//    _machine_serialize(res, m);
-//
-//    persist_write_string((data_key + 1 + m->mkey), res);
-//    APP_LOG(APP_LOG_LEVEL_WARNING, "machine: %s", res);
-//}
+static void _workout_serialize_version1(uint8_t *buf, size_t *size, Workout *w) {
+    *size = 0;
+    buf[*size] = 1; // serialization version
+    *size += 1;
+    buf[*size] = 0; // reserved
+    *size += 1;
+    buf[*size] = (uint8_t) w->location; // location
+    *size += 1;
+    write_long(&buf[*size], w->time_start);
+    *size += 4;
+    write_long(&buf[*size], w->time_end);
+    *size += 4;
+
+    // *size == 11
+
+    buf[*size] = M__COUNT;
+    *size += 1;
+
+    Machine *m = w->first_machine;
+    while (m != NULL) {
+        buf[*size] = (uint8_t) m->mkey;
+        *size += 1;
+        buf[*size] = m->warmup_kg;
+        *size += 1;
+        buf[*size] = m->normal_kg;
+        *size += 1;
+
+        buf[*size] = m->set_1;
+        *size += 1;
+        buf[*size] = m->set_2;
+        *size += 1;
+        buf[*size] = m->set_3;
+        *size += 1;
+
+        buf[*size] = (uint8_t) (m->is_done ? 1 : 0);
+        *size += 1;
+        write_long(&buf[*size], m->time_done);
+        *size += 4;
+
+        m = m->next;
+    }
+
+    // dump(w, buf, 200);
+}
 
 static void _workout_save_to_key(Workout *w, bool deep, uint32_t data_key) {
-    APP_LOG(APP_LOG_LEVEL_WARNING, "saving workout to slot: %d, deep: %d", (int) data_key, (deep ? 1 : 0));
+    APP_LOG(APP_LOG_LEVEL_WARNING, "saving workout to slot: %d", (int) data_key);
 
     size_t size = 0;
     _workout_serialize_version1(buf, &size, w);
-    APP_LOG(APP_LOG_LEVEL_WARNING, "workout: %s, size: %d", res, (int) size);
-    persist_write_data(data_key, buf, size);
 
-//    if (deep) {
-//        Machine *m = w->first_machine;
-//        while (m != NULL) {
-//            _machine_save_to_key(m, data_key);
-//            m = m->next;
-//        }
-//    }
+    persist_write_data(data_key, buf, size);
 }
 
 void workout_save_current(Workout *w, bool deep) {
     _workout_save_to_key(w, deep, DATA_WORKOUT_CURRENT);
 }
 
-static void _read_workout_data_callback(void *ctx, char *key, char *value) {
-    Workout *workout = (Workout *) ctx;
+static void _workout_unserialize_version1(uint8_t *buf, Workout *w) {
+    int sizeValue;
+    int *size = &sizeValue;
 
-    switch (key[0]) {
-        case 'w': {
-            switch (key[1]) {
-                case 'l':
-                    workout->location = value[0];
-                    break;
-                case 's':
-                    workout->time_start = atol(value);
-                    break;
-                case 'e':
-                    workout->time_end = atol(value);
-                    break;
-                default:
-                    break;
-            }
+    *size = 0;
+    // serialization version
+    *size += 1;
+    // reserved
+    *size += 1;
+    w->location = buf[*size];
+    *size += 1;
+    w->time_start = read_long(&buf[*size]);
+    *size += 4;
+    w->time_end = read_long(&buf[*size]);
+    *size += 4;
+
+    if (M__COUNT != buf[*size]) {
+        APP_LOG(APP_LOG_LEVEL_ERROR, "Unserialized M__COUNT (%d) doesn't match current M__COUNT (%d)!", buf[*size], M__COUNT);
+    }
+    *size += 1;
+
+    Machine *m = w->first_machine;
+    while (m != NULL) {
+        if (m->mkey != buf[*size]) {
+            APP_LOG(APP_LOG_LEVEL_ERROR, "Unserialized mkey (%d) doesn't match current mkey (%d)!", buf[*size], m->mkey);
         }
-        default:
-            break;
+        *size += 1;
+        m->warmup_kg = buf[*size];
+        *size += 1;
+        m->normal_kg = buf[*size];
+        *size += 1;
+
+        m->set_1 = buf[*size];
+        *size += 1;
+        m->set_2 = buf[*size];
+        *size += 1;
+        m->set_3 = buf[*size];
+        *size += 1;
+
+        m->is_done = buf[*size] == 1;
+        *size += 1;
+        m->time_done = read_long(&buf[*size]);
+        *size += 4;
+
+        m = m->next;
     }
-}
 
-static void _read_machine_data_callback(void *ctx, char *key, char *value) {
-    Machine *machine = (Machine *) ctx;
-
-//    APP_LOG(APP_LOG_LEVEL_DEBUG, "machine key -> val: %s -> %s", key, value);
-
-    switch (key[0]) {
-        case 'i': // id
-            if (key[1] == 'd') {
-                if (machine->mkey != atoi(value)) {
-                    APP_LOG(APP_LOG_LEVEL_DEBUG, "LOADED INVALID MACHINE INDEX: %d", (key[1] - 'A'));
-                }
-            }
-            break;
-
-        case 'w': // weights
-            switch (key[1]) {
-                case 'w':
-                    machine->warmup_kg = atoi(value);
-                    break;
-                case 'n':
-                    machine->normal_kg = atoi(value);
-                    break;
-                default:
-                    break;
-            }
-            break;
-
-        case 's': // sets
-            switch (key[1]) {
-                case '1':
-                    machine->set_1 = atoi(value);
-                    break;
-                case '2':
-                    machine->set_2 = atoi(value);
-                    break;
-                case '3':
-                    machine->set_3 = atoi(value);
-                    break;
-                default:
-                    break;
-            }
-            break;
-
-        case 'd': // done
-            switch (key[1]) {
-                case 'i':
-                    machine->is_done = atoi(value) == 1;
-                    break;
-                case 't':
-                    machine->time_done = atol(value);
-                    break;
-                default:
-                    break;
-            }
-            break;
-
-        default:
-            break;
-    }
-}
-
-static void _workout_load_by_data_position_without_machines(Workout *workout, uint32_t data_position) {
-    persist_read_string(data_position, res, 200);
-
-    read_key_values_unsafe(workout, res, _read_workout_data_callback);
+    // dump(w, buf, 0);
 }
 
 void workout_load_by_data_position(Workout *workout, uint32_t data_position) {
-//    uint8_t buf[256];
-//    persist_read_data(data_position, buf, 256);
-//
-//    buf[255] = 0;
-//    APP_LOG(APP_LOG_LEVEL_INFO, "buffer at position %lu is %s", (unsigned long)data_position, buf);
-    _workout_load_by_data_position_without_machines(workout, data_position);
+    if (!persist_exists(data_position)) {
+        APP_LOG(APP_LOG_LEVEL_ERROR, "Tried to load workout from position %lu which does not exist.", data_position);
+        return;
+    }
 
-    Machine *machine = workout->first_machine;
+    uint8_t buf[256];
+    persist_read_data(data_position, buf, 256);
 
-    for (int mi = 0; mi < M__COUNT; mi++) {
-        if (machine == NULL) {
-            APP_LOG(APP_LOG_LEVEL_INFO, "workout_load_by_data_position: machine is null!");
-            break;
-        }
-
-        if (persist_exists(data_position + 1 + mi)) { // todo: remove if
-            persist_read_string(data_position + 1 + mi, res, 200);
-            read_key_values_unsafe(machine, res, _read_machine_data_callback);
-
-            APP_LOG(APP_LOG_LEVEL_INFO, "workout_load_by_data_position: data exists: %s", res);
-        } else {
-            APP_LOG(APP_LOG_LEVEL_INFO, "workout_load_by_data_position: key does not exist!");
-        }
-
-        machine = machine->next;
+    if (buf[0] == 1) {
+        _workout_unserialize_version1(buf, workout);
+    } else {
+        APP_LOG(APP_LOG_LEVEL_ERROR, "Cannot unserialize data. Unknown version: %d", buf[0]);
     }
 }
 
@@ -426,13 +385,6 @@ void workout_delete_by_slot(uint16_t slot_number) {
     APP_LOG(APP_LOG_LEVEL_INFO, "persist_delete %lu", (unsigned long)data_position);
     if (persist_exists(data_position)) {
         persist_delete(data_position);
-    }
-
-    for (int i = 0; i < M__COUNT; i++) {
-        APP_LOG(APP_LOG_LEVEL_INFO, "persist_delete %lu", (unsigned long)data_position + 1 + i);
-        if (persist_exists(data_position + 1 + i)) {
-            persist_delete(data_position + 1 + i);
-        }
     }
 
     _slots_save_state(state);

@@ -190,7 +190,7 @@ static void _prepare_upload() {
 }
 
 static void _dump(uint32_t pos) {
-    char slots[30];
+    /*char slots[30];
 
     int i = 0;
     for (;i <= 15; i++) {
@@ -214,7 +214,7 @@ static void _dump(uint32_t pos) {
             persist_read_string(pos + i, buf, 250);
             APP_LOG(APP_LOG_LEVEL_INFO, buf);
         }
-    }
+    }*/
 }
 
 static void _initialize_progress_bars() {

@@ -1,13 +1,13 @@
 #include "tests.h"
 #include "../data/reader_writer.h"
 
-static bool long_is_right_length() {
+static bool types_are_right_length() {
 //    APP_LOG(APP_LOG_LEVEL_DEBUG, "long size: %d", sizeof(long));
 //    APP_LOG(APP_LOG_LEVEL_DEBUG, "int size: %d", sizeof(int));
 //    APP_LOG(APP_LOG_LEVEL_DEBUG, "double size: %d", sizeof(double));
 //    APP_LOG(APP_LOG_LEVEL_DEBUG, "float size: %d", sizeof(float));
 
-    return sizeof(long) == 4;
+    return (sizeof(long) == 4) && (sizeof(int) == 4);
 }
 
 static bool serialization_works() {
@@ -25,5 +25,5 @@ static bool serialization_works() {
 }
 
 bool tests_pass() {
-    return serialization_works() && long_is_right_length();
+    return serialization_works() && types_are_right_length();
 }

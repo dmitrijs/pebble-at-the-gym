@@ -71,11 +71,11 @@ typedef struct Machine Machine;
 struct Machine {
     int mkey;
     char *title;
-    int warmup_kg;
-    int normal_kg;
-    int set_1;
-    int set_2;
-    int set_3;
+    uint8_t warmup_kg;
+    uint8_t normal_kg;
+    uint8_t set_1;
+    uint8_t set_2;
+    uint8_t set_3;
 
     char *warmup_kg_str;
     char *normal_kg_str;
