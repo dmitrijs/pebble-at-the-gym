@@ -240,18 +240,19 @@ void workout_cancel_current() {
     workout_destroy(w);
 }
 
+static Workout *workout_create_without_machines() {
+    Workout *w = malloc(sizeof(Workout));
+    _workout_reset(w, /*deep*/false);
+    w->first_machine = NULL;
+    return w;
+}
+
 Workout *workout_create() {
     Workout *w = workout_create_without_machines();
     w->first_machine = _machines_create_all();
     return w;
 }
 
-Workout *workout_create_without_machines() {
-    Workout *w = malloc(sizeof(Workout));
-    _workout_reset(w, /*deep*/false);
-    w->first_machine = NULL;
-    return w;
-}
 
 static Machine *_machines_create_all() {
 

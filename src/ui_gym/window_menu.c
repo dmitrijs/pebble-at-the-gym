@@ -151,7 +151,7 @@ static void _menu_draw_row_callback(GContext *ctx, const Layer *cell_layer, Menu
 }
 
 static void _check_workout_state(Window *window) {
-    Workout *w = workout_create_without_machines();
+    Workout *w = workout_create();
     workout_load_current(w);
 
     workout_state = STATE_NOT_ACTIVE;

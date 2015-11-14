@@ -113,13 +113,15 @@ void machine_serialize_for_upload(char *res, Machine *m);
 void workout_serialize_for_upload(char *res, Workout *w);
 
 void workout_load_by_data_position(Workout *workout, uint32_t data_position);
+void workout_load_current(Workout *workout);
 void workout_save_current(Workout *w, bool deep);
 void machine_save_current(Machine *m);
-Workout *workout_create_without_machines();
-Workout *workout_create();
-void workout_cancel_current();
-void workout_destroy(Workout *w);
-void workout_load_current(Workout *workout);
 void workout_delete_by_slot(uint16_t slot_number);
+
+Workout *workout_create();
+void workout_destroy(Workout *w);
+
+void workout_cancel_current();
 bool workout_end_current();
+
 SaveState slots_load_state();
