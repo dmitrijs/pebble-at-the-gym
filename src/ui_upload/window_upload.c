@@ -142,13 +142,13 @@ static void _prepare_upload_by_data_position(uint32_t index, uint32_t data_posit
 
     char bigbuf[1600];
 
-    workout_serialize(bigbuf, w);
+    workout_serialize_for_upload(bigbuf, w);
     APP_LOG(APP_LOG_LEVEL_INFO, "concat length: %d", strlen(bigbuf));
     i++;
 
     Machine *m = w->first_machine;
     while (m != NULL) {
-        machine_serialize(buf, m);
+        machine_serialize_for_upload(buf, m);
         operation_str[1] = (char) ('A' + m->mkey);
         operation_str[2] = 0;
         buf[200] = 0;

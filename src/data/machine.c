@@ -8,13 +8,23 @@ static char tmp[201];
 static Machine *_machines_create_all();
 static void _machines_destroy(Machine *first_machine);
 
-void machine_serialize(char *res, Machine *m) {
+void machine_serialize_for_upload(char *res, Machine *m) {
     snprintf(res, 200, "id=%d ww=%d wn=%d ", m->mkey, m->warmup_kg, m->normal_kg);
     snprintf(tmp, 200, "s1=%d s2=%d s3=%d di=%d dt=%ld;", m->set_1, m->set_2, m->set_3, (m->is_done ? 1 : 0), m->time_done);
     strcat(res, tmp);
 }
 
-void workout_serialize(char *res, Workout *w) {
+void workout_serialize_for_upload(char *res, Workout *w) {
+    snprintf(res, 200, "wl=%c ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
+}
+
+static void machine_serialize(char *res, Machine *m) {
+    snprintf(res, 200, "id=%d ww=%d wn=%d ", m->mkey, m->warmup_kg, m->normal_kg);
+    snprintf(tmp, 200, "s1=%d s2=%d s3=%d di=%d dt=%ld;", m->set_1, m->set_2, m->set_3, (m->is_done ? 1 : 0), m->time_done);
+    strcat(res, tmp);
+}
+
+static void workout_serialize(char *res, Workout *w) {
     snprintf(res, 200, "wl=%c ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
 }
 

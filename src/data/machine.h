@@ -17,7 +17,7 @@ enum MACHINE_TYPES {
     M__COUNT
 };
 
-char get_key(size_t machineType) {
+static char get_key(size_t machineType) {
     switch (machineType) {
         case M_WARMUP:
             return 'A';
@@ -109,14 +109,12 @@ struct Workout {
 };
 // data size: 1char(location)+4bytes(start)+4bytes(end)=11 bytes
 
-void machine_serialize(char *res, Machine *m);
-void workout_serialize(char *res, Workout *w);
+void machine_serialize_for_upload(char *res, Machine *m);
+void workout_serialize_for_upload(char *res, Workout *w);
+
 void workout_load_by_data_position(Workout *workout, uint32_t data_position);
-void workout_load_current_without_machines(Workout *workout);
 void workout_save_current(Workout *w, bool deep);
 void machine_save_current(Machine *m);
-void workout_serialize(char *res, Workout *w);
-void machine_serialize(char *res, Machine *m);
 Workout *workout_create_without_machines();
 Workout *workout_create();
 void workout_cancel_current();
