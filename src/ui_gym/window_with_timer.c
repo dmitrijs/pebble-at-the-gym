@@ -3,12 +3,12 @@
 #include "window_with_timer.h"
 #include "../data/machine.h"
 
-static TextLayer *editable_fields[F__COUNT];
-static size_t current_field;
+static TextLayer *_editable_fields[F__COUNT];
+static size_t _current_field;
 
-static Machine *current_machine;
+static Machine *_current_machine;
 
-static Workout *workout;
+static Workout *_workout;
 
 static Window *s_window;
 static GFont s_res_bitham_30_black;
@@ -124,59 +124,59 @@ static void _destroy_ui(void) {
 static void _handle_window_unload(Window *window) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, "unload called, ui was destroyed");
     _destroy_ui();
-    workout_destroy(workout);
+    workout_destroy(_workout);
 }
 
 static void _update_machine_layers() {
-    text_layer_set_text(s_machine, current_machine->title);
+    text_layer_set_text(s_machine, _current_machine->title);
 
-    snprintf(current_machine->warmup_kg_str, 4, "%d", current_machine->warmup_kg);
-    snprintf(current_machine->normal_kg_str, 4, "%d", current_machine->normal_kg);
-    snprintf(current_machine->set_1_str, 4, "%d", current_machine->set_1);
-    snprintf(current_machine->set_2_str, 4, "%d", current_machine->set_2);
-    snprintf(current_machine->set_3_str, 4, "%d", current_machine->set_3);
+    snprintf(_current_machine->warmup_kg_str, 4, "%d", _current_machine->warmup_kg);
+    snprintf(_current_machine->normal_kg_str, 4, "%d", _current_machine->normal_kg);
+    snprintf(_current_machine->set_1_str, 4, "%d", _current_machine->set_1);
+    snprintf(_current_machine->set_2_str, 4, "%d", _current_machine->set_2);
+    snprintf(_current_machine->set_3_str, 4, "%d", _current_machine->set_3);
 
-    text_layer_set_text(s_warmup_kg, current_machine->warmup_kg_str);
-    text_layer_set_text(s_normal_kg, current_machine->normal_kg_str);
-    text_layer_set_text(s_set_1, current_machine->set_1_str);
-    text_layer_set_text(s_set_2, current_machine->set_2_str);
-    text_layer_set_text(s_set_3, current_machine->set_3_str);
+    text_layer_set_text(s_warmup_kg, _current_machine->warmup_kg_str);
+    text_layer_set_text(s_normal_kg, _current_machine->normal_kg_str);
+    text_layer_set_text(s_set_1, _current_machine->set_1_str);
+    text_layer_set_text(s_set_2, _current_machine->set_2_str);
+    text_layer_set_text(s_set_3, _current_machine->set_3_str);
 
     layer_mark_dirty(s_layer_1);
 }
 
 static void _clear_inv_layer() {
-    text_layer_set_background_color(editable_fields[current_field], GColorClear);
-    text_layer_set_text_color(editable_fields[current_field], GColorBlack);
+    text_layer_set_background_color(_editable_fields[_current_field], GColorClear);
+    text_layer_set_text_color(_editable_fields[_current_field], GColorBlack);
 }
 
 static void _update_inv_layer() {
-    text_layer_set_background_color(editable_fields[current_field], GColorDarkGreen);
-    text_layer_set_text_color(editable_fields[current_field], GColorWhite);
+    text_layer_set_background_color(_editable_fields[_current_field], GColorDarkGreen);
+    text_layer_set_text_color(_editable_fields[_current_field], GColorWhite);
 }
 
 static void _decrease_click_handler(ClickRecognizerRef recognizer, void *context) {
-    switch (current_field) {
+    switch (_current_field) {
         case F_TITLE:
-            if (current_machine->next != NULL) {
-                current_machine = current_machine->next;
+            if (_current_machine->next != NULL) {
+                _current_machine = _current_machine->next;
                 _update_machine_layers();
             }
             break;
         case F_WARMUP_KG:
-            current_machine->warmup_kg--;
+            _current_machine->warmup_kg--;
             break;
         case F_NORMAL_KG:
-            current_machine->normal_kg--;
+            _current_machine->normal_kg--;
             break;
         case F_SET_1:
-            current_machine->set_1--;
+            _current_machine->set_1--;
             break;
         case F_SET_2:
-            current_machine->set_2--;
+            _current_machine->set_2--;
             break;
         case F_SET_3:
-            current_machine->set_3--;
+            _current_machine->set_3--;
             break;
         default:
             return;
@@ -185,27 +185,27 @@ static void _decrease_click_handler(ClickRecognizerRef recognizer, void *context
 }
 
 static void _increase_click_handler(ClickRecognizerRef recognizer, void *context) {
-    switch (current_field) {
+    switch (_current_field) {
         case F_TITLE:
-            if (current_machine->prev != NULL) {
-                current_machine = current_machine->prev;
+            if (_current_machine->prev != NULL) {
+                _current_machine = _current_machine->prev;
                 _update_machine_layers();
             }
             break;
         case F_WARMUP_KG:
-            current_machine->warmup_kg++;
+            _current_machine->warmup_kg++;
             break;
         case F_NORMAL_KG:
-            current_machine->normal_kg++;
+            _current_machine->normal_kg++;
             break;
         case F_SET_1:
-            current_machine->set_1++;
+            _current_machine->set_1++;
             break;
         case F_SET_2:
-            current_machine->set_2++;
+            _current_machine->set_2++;
             break;
         case F_SET_3:
-            current_machine->set_3++;
+            _current_machine->set_3++;
             break;
         default:
             return;
@@ -218,37 +218,37 @@ static void _hide_window_with_timer(void) {
 }
 
 static void _prev_click_handler(ClickRecognizerRef recognizer, void *context) {
-    if (current_field == 0) {
+    if (_current_field == 0) {
         _hide_window_with_timer();
         return;
     }
-    if (current_field > 0) {
+    if (_current_field > 0) {
         _clear_inv_layer();
-        current_field--;
+        _current_field--;
         _update_inv_layer();
     }
 }
 
 static void _next_click_handler(ClickRecognizerRef recognizer, void *context) {
     _clear_inv_layer();
-    current_field++;
-    if (current_field == F__COUNT) {
-        current_field = 0;
+    _current_field++;
+    if (_current_field == F__COUNT) {
+        _current_field = 0;
 
-        current_machine->is_done = true;
-        if (current_machine->time_done == 0) {
-            current_machine->time_done = time(NULL);
+        _current_machine->is_done = true;
+        if (_current_machine->time_done == 0) {
+            _current_machine->time_done = time(NULL);
         }
-        machine_save_current(current_machine);
 
-        if (current_machine->next != NULL) {
-            current_machine = current_machine->next;
+        if (_current_machine->next != NULL) {
+            _current_machine = _current_machine->next;
         } else {
-            if (workout->time_end == 0) {
-                workout->time_end = (long) time(NULL);
-                workout_save_current(workout, /*deep*/false);
+            if (_workout->time_end == 0) {
+                _workout->time_end = (long) time(NULL);
             }
         }
+        workout_save_current(_workout, true);
+
         _update_machine_layers();
     }
 
@@ -266,11 +266,11 @@ static void _click_config_provider(void *context) {
 static void _draw_rectangles(struct Layer *layer, GContext *ctx) {
     int16_t left_pos = 4;
     int16_t top_pos = 3;
-    Machine *m = workout->first_machine;
+    Machine *m = _workout->first_machine;
     while (m != NULL) {
         GRect rect;
         bool double_border = false;
-        if (current_machine == m) {
+        if (_current_machine == m) {
             rect = (GRect) {.origin = {(int16_t) (left_pos - 4), (int16_t) (top_pos - 3)}, .size = {9 + 8, 9 + 6}};
             double_border = true;
         } else {
@@ -300,28 +300,28 @@ void show_window_with_timer(bool new_workout, char location) {
     window_set_click_config_provider(s_window, _click_config_provider);
     layer_set_update_proc(s_layer_1, _draw_rectangles);
 
-    editable_fields[F_TITLE] = s_machine;
-    editable_fields[F_WARMUP_KG] = s_warmup_kg;
-    editable_fields[F_NORMAL_KG] = s_normal_kg;
-    editable_fields[F_SET_1] = s_set_1;
-    editable_fields[F_SET_2] = s_set_2;
-    editable_fields[F_SET_3] = s_set_3;
+    _editable_fields[F_TITLE] = s_machine;
+    _editable_fields[F_WARMUP_KG] = s_warmup_kg;
+    _editable_fields[F_NORMAL_KG] = s_normal_kg;
+    _editable_fields[F_SET_1] = s_set_1;
+    _editable_fields[F_SET_2] = s_set_2;
+    _editable_fields[F_SET_3] = s_set_3;
 
-    current_field = F_TITLE;
+    _current_field = F_TITLE;
 
-    workout = workout_create();
-    workout_load_current(workout);
+    _workout = workout_create();
+    workout_load_current(_workout);
 
     if (new_workout) {
-        workout->location = location;
-        workout->time_start = time(NULL);
+        _workout->location = location;
+        _workout->time_start = time(NULL);
 
-        workout_save_current(workout, /*deep*/false);
+        workout_save_current(_workout, /*deep*/false);
     }
 
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Workout time: %ld - %ld, location: %c", workout->time_start, workout->time_end, workout->location);
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Workout time: %ld - %ld, location: %c", _workout->time_start, _workout->time_end, _workout->location);
 
-    current_machine = workout->first_machine;
+    _current_machine = _workout->first_machine;
 
     _update_machine_layers();
     _update_inv_layer();

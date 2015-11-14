@@ -18,31 +18,27 @@ void workout_serialize_for_upload(char *res, Workout *w) {
     snprintf(res, 200, "wl=%c ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
 }
 
-static void machine_serialize(char *res, Machine *m) {
+static void _machine_serialize(char *res, Machine *m) {
     snprintf(res, 200, "id=%d ww=%d wn=%d ", m->mkey, m->warmup_kg, m->normal_kg);
     snprintf(tmp, 200, "s1=%d s2=%d s3=%d di=%d dt=%ld;", m->set_1, m->set_2, m->set_3, (m->is_done ? 1 : 0), m->time_done);
     strcat(res, tmp);
 }
 
-static void workout_serialize(char *res, Workout *w) {
+static void _workout_serialize(char *res, Workout *w) {
     snprintf(res, 200, "wl=%c ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
 }
 
 static void _machine_save_to_key(Machine *m, uint32_t data_key) {
-    machine_serialize(res, m);
+    _machine_serialize(res, m);
 
     persist_write_string((data_key + 1 + m->mkey), res);
     APP_LOG(APP_LOG_LEVEL_WARNING, "machine: %s", res);
 }
 
-void machine_save_current(Machine *m) {
-    _machine_save_to_key(m, DATA_WORKOUT_CURRENT);
-}
-
 static void _workout_save_to_key(Workout *w, bool deep, uint32_t data_key) {
     APP_LOG(APP_LOG_LEVEL_WARNING, "saving workout to slot: %d, deep: %d", (int) data_key, (deep ? 1 : 0));
 
-    workout_serialize(res, w);
+    _workout_serialize(res, w);
     APP_LOG(APP_LOG_LEVEL_WARNING, "workout: %s", res);
     persist_write_string(data_key, res);
 
@@ -240,7 +236,7 @@ void workout_cancel_current() {
     workout_destroy(w);
 }
 
-static Workout *workout_create_without_machines() {
+static Workout *_workout_create_without_machines() {
     Workout *w = malloc(sizeof(Workout));
     _workout_reset(w, /*deep*/false);
     w->first_machine = NULL;
@@ -248,7 +244,7 @@ static Workout *workout_create_without_machines() {
 }
 
 Workout *workout_create() {
-    Workout *w = workout_create_without_machines();
+    Workout *w = _workout_create_without_machines();
     w->first_machine = _machines_create_all();
     return w;
 }

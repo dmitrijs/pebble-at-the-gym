@@ -115,7 +115,6 @@ void workout_serialize_for_upload(char *res, Workout *w);
 void workout_load_by_data_position(Workout *workout, uint32_t data_position);
 void workout_load_current(Workout *workout);
 void workout_save_current(Workout *w, bool deep);
-void machine_save_current(Machine *m);
 void workout_delete_by_slot(uint16_t slot_number);
 
 Workout *workout_create();
