@@ -2,6 +2,7 @@
 #include "machine.h"
 #include "../lib/key_value_unsafe.h"
 
+static uint8_t buf[256];
 static char res[201];
 static char tmp[201];
 
@@ -27,27 +28,51 @@ static void _workout_serialize(char *res, Workout *w) {
     snprintf(res, 200, "wl=%c ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
 }
 
-static void _machine_save_to_key(Machine *m, uint32_t data_key) {
-    _machine_serialize(res, m);
+static void _workout_serialize_version1(uint8_t *buf, size_t *size, Workout *w) {
+    /**size = 0;
 
-    persist_write_string((data_key + 1 + m->mkey), res);
-    APP_LOG(APP_LOG_LEVEL_WARNING, "machine: %s", res);
+    buf[0] = '1'; // serialization version
+    buf[1] = '-'; // reserved
+    buf[2] = (uint8_t) w->location; // location
+    long time_start = w->time_start;
+    buf[3] = (uint8_t) (time_start % ); // location
+    buf[4] = (uint8_t) (w->time_start >> 3); // location
+    buf[5] = (uint8_t) (w->time_start >> 2); // location
+    buf[6] = (uint8_t) (w->time_start >> 1); // location
+
+    snprintf(res, 200, "wl=%c ws=%ld we=%ld;", w->location, w->time_start, w->time_end);
+
+
+    Machine *m = w->first_machine;
+    while (m != NULL) {
+        _machine_save_to_key(m, data_key);
+        m = m->next;
+    }*/
+
 }
+
+//static void _machine_save_to_key(Machine *m, uint32_t data_key) {
+//    _machine_serialize(res, m);
+//
+//    persist_write_string((data_key + 1 + m->mkey), res);
+//    APP_LOG(APP_LOG_LEVEL_WARNING, "machine: %s", res);
+//}
 
 static void _workout_save_to_key(Workout *w, bool deep, uint32_t data_key) {
     APP_LOG(APP_LOG_LEVEL_WARNING, "saving workout to slot: %d, deep: %d", (int) data_key, (deep ? 1 : 0));
 
-    _workout_serialize(res, w);
-    APP_LOG(APP_LOG_LEVEL_WARNING, "workout: %s", res);
-    persist_write_string(data_key, res);
+    size_t size = 0;
+    _workout_serialize_version1(buf, &size, w);
+    APP_LOG(APP_LOG_LEVEL_WARNING, "workout: %s, size: %d", res, (int) size);
+    persist_write_data(data_key, buf, size);
 
-    if (deep) {
-        Machine *m = w->first_machine;
-        while (m != NULL) {
-            _machine_save_to_key(m, data_key);
-            m = m->next;
-        }
-    }
+//    if (deep) {
+//        Machine *m = w->first_machine;
+//        while (m != NULL) {
+//            _machine_save_to_key(m, data_key);
+//            m = m->next;
+//        }
+//    }
 }
 
 void workout_save_current(Workout *w, bool deep) {
