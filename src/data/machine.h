@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pebble.h>
+#include "reader_writer.h"
 
 enum MACHINE_TYPES {
     M_WARMUP,

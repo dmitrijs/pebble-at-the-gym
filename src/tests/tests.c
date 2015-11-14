@@ -1,4 +1,5 @@
 #include "tests.h"
+#include "../data/reader_writer.h"
 
 static bool long_is_right_length() {
 //    APP_LOG(APP_LOG_LEVEL_DEBUG, "long size: %d", sizeof(long));
@@ -13,18 +14,12 @@ static bool serialization_works() {
     uint8_t buf[4];
 
     long x = 1234567890;
-    for (int i = 0; i <= 3; i++) {
-        *(buf + i) = (uint8_t) (x >> (24 - (i * 8)) % 256);
-    }
+    write_long(buf, x);
 
     uint8_t dst[4];
     memcpy(dst, buf, 4);
 
-    long x2 = *(dst);
-    for (int i = 1; i <= 3; i++) {
-        x2 <<= 8;
-        x2 += *(dst + i);
-    }
+    long x2 = read_long(dst);
 
     return x == x2;
 }
