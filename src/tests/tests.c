@@ -1,5 +1,4 @@
 #include "tests.h"
-#include "../data/reader_writer.h"
 #include "../data/machine.h"
 
 static bool types_are_right_length() {
@@ -9,20 +8,6 @@ static bool types_are_right_length() {
 //    APP_LOG(APP_LOG_LEVEL_DEBUG, "float size: %d", sizeof(float));
 
     return (sizeof(long) == 4) && (sizeof(int) == 4);
-}
-
-static bool serialization_works() {
-    uint8_t buf[4];
-
-    long x = 1234567890;
-    write_long(buf, x);
-
-    uint8_t dst[4];
-    memcpy(dst, buf, 4);
-
-    long x2 = read_long(dst);
-
-    return x == x2;
 }
 
 static bool workout_serializes() {
@@ -94,5 +79,5 @@ static bool workout_serializes() {
 }
 
 bool tests_pass() {
-    return serialization_works() && types_are_right_length() && workout_serializes();
+    return types_are_right_length() && workout_serializes();
 }

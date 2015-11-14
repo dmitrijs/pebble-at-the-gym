@@ -34,63 +34,48 @@ static void dump(Workout *w, uint8_t *buf, int len) {
     }
 }
 
-static void _workout_serialize_version1(uint8_t *buf, uint8_t *size, Workout *w) {
-    *size = 0;
-    buf[*size] = 1; // serialization version
-    *size += 1;
-    buf[*size] = 0; // reserved
-    *size += 1;
-    buf[*size] = (uint8_t) w->location; // location
-    *size += 1;
-    write_long(&buf[*size], w->time_start);
-    *size += 4;
-    write_long(&buf[*size], w->time_end);
-    *size += 4;
+static uint8_t _workout_serialize_version1(uint8_t *buf, Workout *w) {
+    Serializer* ser = serializer_create(buf);
 
-    // *size == 11
+    serializer_write_uint8(ser, 1); // serialization version
+    serializer_write_uint8(ser, (uint8_t) w->location);
+    serializer_write_long(ser, w->time_start);
+    serializer_write_long(ser, w->time_end);
 
-    buf[*size] = M__COUNT;
-    *size += 1;
+    serializer_write_uint8(ser, M__COUNT);
 
     Machine *m = w->first_machine;
     while (m != NULL) {
-        buf[*size] = (uint8_t) m->mkey;
-        *size += 1;
-        buf[*size] = m->warmup_kg;
-        *size += 1;
-        buf[*size] = m->normal_kg;
-        *size += 1;
+        serializer_write_uint8(ser, (uint8_t) m->mkey);
+        serializer_write_uint8(ser, m->warmup_kg);
+        serializer_write_uint8(ser, m->normal_kg);
+        serializer_write_uint8(ser, m->set_1);
+        serializer_write_uint8(ser, m->set_2);
+        serializer_write_uint8(ser, m->set_3);
 
-        buf[*size] = m->set_1;
-        *size += 1;
-        buf[*size] = m->set_2;
-        *size += 1;
-        buf[*size] = m->set_3;
-        *size += 1;
-
-        buf[*size] = (uint8_t) (m->is_done ? 1 : 0);
-        *size += 1;
-        write_long(&buf[*size], m->time_done);
-        *size += 4;
+        serializer_write_uint8(ser, (uint8_t) (m->is_done ? 1 : 0));
+        serializer_write_long(ser, m->time_done);
 
         m = m->next;
     }
 
+    serializer_destroy(ser);
+
     // dump(w, buf, 200);
+
+    return ser->size;
 }
 
 static void _workout_save_to_key(Workout *w, bool deep, uint32_t data_key) {
     APP_LOG(APP_LOG_LEVEL_WARNING, "saving workout to slot: %d", (int) data_key);
 
-    uint8_t size = 0;
-    _workout_serialize_version1(buf, &size, w);
+    uint8_t size = _workout_serialize_version1(buf, w);
 
     persist_write_data(data_key, buf, size);
 }
 
-void workout_serialize_for_test(uint8_t *buf, Workout *w) {
-    uint8_t size = 0;
-    _workout_serialize_version1(buf, &size, w);
+uint8_t workout_serialize_for_test(uint8_t *buf, Workout *w) {
+    return _workout_serialize_version1(buf, w);
 }
 
 void workout_save_current(Workout *w, bool deep) {
@@ -98,51 +83,39 @@ void workout_save_current(Workout *w, bool deep) {
 }
 
 static void _workout_unserialize_version1(uint8_t *buf, Workout *w) {
-    uint8_t sizeValue;
-    uint8_t *size = &sizeValue;
+    Serializer* ser = serializer_create(buf);
 
-    *size = 0;
-    // serialization version
-    *size += 1;
-    // reserved
-    *size += 1;
-    w->location = buf[*size];
-    *size += 1;
-    w->time_start = read_long(&buf[*size]);
-    *size += 4;
-    w->time_end = read_long(&buf[*size]);
-    *size += 4;
+    serializer_read_uint8(ser); // serialization version
+    w->location = serializer_read_uint8(ser);
+    w->time_start = serializer_read_long(ser);
+    w->time_end = serializer_read_long(ser);
 
-    if (M__COUNT != buf[*size]) {
-        APP_LOG(APP_LOG_LEVEL_ERROR, "Unserialized M__COUNT (%d) doesn't match current M__COUNT (%d)!", buf[*size], M__COUNT);
+    uint8_t count = serializer_read_uint8(ser);
+
+    if (M__COUNT != count) {
+        APP_LOG(APP_LOG_LEVEL_ERROR, "Unserialized M__COUNT (%d) doesn't match current M__COUNT (%d)!", count, M__COUNT);
     }
-    *size += 1;
 
     Machine *m = w->first_machine;
     while (m != NULL) {
-        if (m->mkey != buf[*size]) {
-            APP_LOG(APP_LOG_LEVEL_ERROR, "Unserialized mkey (%d) doesn't match current mkey (%d)!", buf[*size], m->mkey);
+        uint8_t mkey = serializer_read_uint8(ser);
+        if (m->mkey != mkey) {
+            APP_LOG(APP_LOG_LEVEL_ERROR, "Unserialized mkey (%d) doesn't match current mkey (%d)!", mkey, m->mkey);
         }
-        *size += 1;
-        m->warmup_kg = buf[*size];
-        *size += 1;
-        m->normal_kg = buf[*size];
-        *size += 1;
+        m->warmup_kg = serializer_read_uint8(ser);
+        m->normal_kg = serializer_read_uint8(ser);
 
-        m->set_1 = buf[*size];
-        *size += 1;
-        m->set_2 = buf[*size];
-        *size += 1;
-        m->set_3 = buf[*size];
-        *size += 1;
+        m->set_1 = serializer_read_uint8(ser);
+        m->set_2 = serializer_read_uint8(ser);
+        m->set_3 = serializer_read_uint8(ser);
 
-        m->is_done = buf[*size] == 1;
-        *size += 1;
-        m->time_done = read_long(&buf[*size]);
-        *size += 4;
+        m->is_done = serializer_read_uint8(ser) == 1;
+        m->time_done = serializer_read_long(ser);
 
         m = m->next;
     }
+
+    serializer_destroy(ser);
 
     // dump(w, buf, 0);
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pebble.h>
-#include "reader_writer.h"
+#include "serializer.h"
 
 enum MACHINE_TYPES {
     M_WARMUP,
@@ -130,5 +130,5 @@ bool workout_end_current();
 SaveState slots_load_state();
 
 // for tests
-void workout_serialize_for_test(uint8_t *buf, Workout *w);
+uint8_t workout_serialize_for_test(uint8_t *buf, Workout *w);
 void workout_unserialize_for_test(uint8_t *buf, Workout *w);

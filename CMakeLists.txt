@@ -26,5 +26,5 @@ set(SOURCE_FILES appinfo.json
         src/ui_upload/window_upload.c src/ui_upload/window_upload.h
         src/ui_delete/window_delete.c src/ui_delete/window_delete.h
         src/ui/window_error.c src/ui/window_error.h
-        src/data/reader_writer.c src/data/reader_writer.h)
+        src/data/serializer.c src/data/serializer.h)
 add_executable(at_the_gym ${SOURCE_FILES})
