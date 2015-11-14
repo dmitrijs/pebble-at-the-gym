@@ -18,6 +18,7 @@ enum MACHINE_TYPES {
     M__COUNT
 };
 
+/*
 static char get_key(size_t machineType) {
     switch (machineType) {
         case M_WARMUP:
@@ -48,6 +49,7 @@ static char get_key(size_t machineType) {
             return '0';
     }
 }
+*/
 
 enum FIELD_TYPE {
     F_TITLE,
@@ -126,3 +128,7 @@ void workout_cancel_current();
 bool workout_end_current();
 
 SaveState slots_load_state();
+
+// for tests
+void workout_serialize_for_test(uint8_t *buf, Workout *w);
+void workout_unserialize_for_test(uint8_t *buf, Workout *w);

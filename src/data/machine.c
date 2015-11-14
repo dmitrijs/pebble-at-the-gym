@@ -88,6 +88,11 @@ static void _workout_save_to_key(Workout *w, bool deep, uint32_t data_key) {
     persist_write_data(data_key, buf, size);
 }
 
+void workout_serialize_for_test(uint8_t *buf, Workout *w) {
+    uint8_t size = 0;
+    _workout_serialize_version1(buf, &size, w);
+}
+
 void workout_save_current(Workout *w, bool deep) {
     _workout_save_to_key(w, deep, DATA_WORKOUT_CURRENT);
 }
@@ -156,6 +161,10 @@ static void _workout_load(Workout *workout, uint32_t data_position) {
     } else {
         APP_LOG(APP_LOG_LEVEL_ERROR, "Cannot unserialize data. Unknown version: %d", buf[0]);
     }
+}
+
+void workout_unserialize_for_test(uint8_t* buf, Workout *workout) {
+    _workout_unserialize_version1(buf, workout);
 }
 
 void workout_load_current(Workout *workout) {
