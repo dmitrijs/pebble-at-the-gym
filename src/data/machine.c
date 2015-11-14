@@ -5,7 +5,6 @@
 static char res[201];
 static char tmp[201];
 
-static Machine *_machines_create_all();
 static void _machines_destroy(Machine *first_machine);
 
 void machine_serialize_for_upload(char *res, Machine *m) {
@@ -146,10 +145,6 @@ static void _workout_load_by_data_position_without_machines(Workout *workout, ui
     read_key_values_unsafe(workout, res, _read_workout_data_callback);
 }
 
-void workout_load_current_without_machines(Workout *workout) {
-    _workout_load_by_data_position_without_machines(workout, DATA_WORKOUT_CURRENT);
-}
-
 void workout_load_by_data_position(Workout *workout, uint32_t data_position) {
 //    uint8_t buf[256];
 //    persist_read_data(data_position, buf, 256);
@@ -207,11 +202,6 @@ void workout_destroy(Workout *w) {
     free(w);
 }
 
-static void _machine_reset(Machine *m) {
-    m->is_done = false;
-    m->time_done = 0;
-}
-
 static void _workout_reset(Workout *w, bool deep) {
     w->time_start = 0;
     w->time_end = 0;
@@ -220,7 +210,9 @@ static void _workout_reset(Workout *w, bool deep) {
     if (deep) {
         Machine *m = w->first_machine;
         while (m != NULL) {
-            _machine_reset(m);
+            m->is_done = false;
+            m->time_done = 0;
+
             m = m->next;
         }
     }
@@ -235,20 +227,6 @@ void workout_cancel_current() {
 
     workout_destroy(w);
 }
-
-static Workout *_workout_create_without_machines() {
-    Workout *w = malloc(sizeof(Workout));
-    _workout_reset(w, /*deep*/false);
-    w->first_machine = NULL;
-    return w;
-}
-
-Workout *workout_create() {
-    Workout *w = _workout_create_without_machines();
-    w->first_machine = _machines_create_all();
-    return w;
-}
-
 
 static Machine *_machines_create_all() {
 
@@ -320,6 +298,13 @@ static Machine *_machines_create_all() {
         last_created_machine = m;
     }
     return first_machine;
+}
+
+Workout *workout_create() {
+    Workout *w = malloc(sizeof(Workout));
+    _workout_reset(w, /*deep*/false);
+    w->first_machine = _machines_create_all();
+    return w;
 }
 
 static void _state_read_callback(void *ctx, char *key, char *value) {
