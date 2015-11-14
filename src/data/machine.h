@@ -16,6 +16,38 @@ enum MACHINE_TYPES {
     M_COOLDOWN,
     M__COUNT
 };
+
+char get_key(size_t machineType) {
+    switch (machineType) {
+        case M_WARMUP:
+            return 'A';
+        case M_SHOULDERS:
+            return 'B';
+        case M_CHEST:
+            return 'C';
+        case M_TRICEPS:
+            return 'D';
+        case M_BICEPS:
+            return 'E';
+        case M_UPPER_BACK:
+            return 'F';
+        case M_LOWER_BACK:
+            return 'G';
+        case M_LEGS_ULTIMATE:
+            return 'H';
+        case M_ABS:
+            return 'I';
+        case M_ABS_SIDE:
+            return 'J';
+        case M_COOLDOWN:
+            return 'K';
+        case M__COUNT:
+            return 'L';
+        default:
+            return '0';
+    }
+}
+
 enum FIELD_TYPE {
     F_TITLE,
     F_WARMUP_KG,

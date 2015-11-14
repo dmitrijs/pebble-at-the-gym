@@ -145,6 +145,11 @@ void workout_load_current_without_machines(Workout *workout) {
 }
 
 void workout_load_by_data_position(Workout *workout, uint32_t data_position) {
+//    uint8_t buf[256];
+//    persist_read_data(data_position, buf, 256);
+//
+//    buf[255] = 0;
+//    APP_LOG(APP_LOG_LEVEL_INFO, "buffer at position %lu is %s", (unsigned long)data_position, buf);
     _workout_load_by_data_position_without_machines(workout, data_position);
 
     Machine *machine = workout->first_machine;
