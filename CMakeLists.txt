@@ -14,6 +14,7 @@ set(SOURCE_FILES appinfo.json
         src/main.c
 
         src/data/machine.c src/data/machine.h
+        src/tests/tests.c src/tests/tests.h
 
         src/lib/key_value_unsafe.c src/lib/key_value_unsafe.h
         src/lib/message-queue.c src/lib/message-queue.h
