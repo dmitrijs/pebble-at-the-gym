@@ -34,7 +34,7 @@ static void dump(Workout *w, uint8_t *buf, int len) {
     }
 }
 
-static void _workout_serialize_version1(uint8_t *buf, size_t *size, Workout *w) {
+static void _workout_serialize_version1(uint8_t *buf, uint8_t *size, Workout *w) {
     *size = 0;
     buf[*size] = 1; // serialization version
     *size += 1;
@@ -82,7 +82,7 @@ static void _workout_serialize_version1(uint8_t *buf, size_t *size, Workout *w) 
 static void _workout_save_to_key(Workout *w, bool deep, uint32_t data_key) {
     APP_LOG(APP_LOG_LEVEL_WARNING, "saving workout to slot: %d", (int) data_key);
 
-    size_t size = 0;
+    uint8_t size = 0;
     _workout_serialize_version1(buf, &size, w);
 
     persist_write_data(data_key, buf, size);
@@ -93,8 +93,8 @@ void workout_save_current(Workout *w, bool deep) {
 }
 
 static void _workout_unserialize_version1(uint8_t *buf, Workout *w) {
-    int sizeValue;
-    int *size = &sizeValue;
+    uint8_t sizeValue;
+    uint8_t *size = &sizeValue;
 
     *size = 0;
     // serialization version
@@ -159,11 +159,11 @@ static void _workout_load(Workout *workout, uint32_t data_position) {
 }
 
 void workout_load_current(Workout *workout) {
-    workout_load_archived(workout, DATA_WORKOUT_CURRENT);
+    _workout_load(workout, DATA_WORKOUT_CURRENT);
 }
 
 void workout_load_archived(Workout *workout, uint32_t data_position) {
-    _workout_load(workout, DATA_WORKOUT_CURRENT);
+    _workout_load(workout, data_position);
 }
 
 static void _machines_destroy(Machine *first_machine) {
