@@ -136,7 +136,7 @@ static void _prepare_upload_by_data_position(uint32_t index, uint32_t data_posit
     group_str[0] = (char) ('0' + index);
 
     Workout *w = workout_create();
-    workout_load_by_data_position(w, data_position);
+    workout_load_archived(w, data_position);
 
     uint32_t i = 0;
 

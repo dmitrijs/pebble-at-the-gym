@@ -60,7 +60,8 @@ enum FIELD_TYPE {
 };
 
 enum {
-    DATA_WORKOUT_CURRENT = 0, // workout + 12 machines = 13 indices
+    DATA_WORKOUT_CURRENT = 0,
+    DATA_WORKOUT_ARCHIVE = 10,
     DATA_WORKOUT_SAVE_STATE = 100,
     DATA_WORKOUT_SAVE_1 = 200,
     DATA_WORKOUT_SAVE_2 = 300,
@@ -113,7 +114,7 @@ struct Workout {
 void machine_serialize_for_upload(char *res, Machine *m);
 void workout_serialize_for_upload(char *res, Workout *w);
 
-void workout_load_by_data_position(Workout *workout, uint32_t data_position);
+void workout_load_archived(Workout *workout, uint32_t data_position);
 void workout_load_current(Workout *workout);
 void workout_save_current(Workout *w, bool deep);
 void workout_delete_by_slot(uint16_t slot_number);

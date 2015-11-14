@@ -142,7 +142,7 @@ static void _workout_unserialize_version1(uint8_t *buf, Workout *w) {
     // dump(w, buf, 0);
 }
 
-void workout_load_by_data_position(Workout *workout, uint32_t data_position) {
+static void _workout_load(Workout *workout, uint32_t data_position) {
     if (!persist_exists(data_position)) {
         APP_LOG(APP_LOG_LEVEL_ERROR, "Tried to load workout from position %lu which does not exist.", data_position);
         return;
@@ -159,7 +159,11 @@ void workout_load_by_data_position(Workout *workout, uint32_t data_position) {
 }
 
 void workout_load_current(Workout *workout) {
-    workout_load_by_data_position(workout, DATA_WORKOUT_CURRENT);
+    workout_load_archived(workout, DATA_WORKOUT_CURRENT);
+}
+
+void workout_load_archived(Workout *workout, uint32_t data_position) {
+    _workout_load(workout, DATA_WORKOUT_CURRENT);
 }
 
 static void _machines_destroy(Machine *first_machine) {
